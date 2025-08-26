@@ -1,0 +1,21 @@
+session_name: autodev
+start_directory: .
+windows:
+  - window_name: orchestrator
+    panes:
+      - shell_command:
+          - uvicorn orchestrator.app:app --reload --host 0.0.0.0 --port 8000
+  - window_name: redis
+    panes:
+      - shell_command:
+          - redis-server
+  - window_name: workers
+    panes:
+      - shell_command:
+          - rq worker autodev
+      - shell_command:
+          - rq worker autodev
+  - window_name: hygiene
+    panes:
+      - shell_command:
+          - watch -n 60 'git -C $REPO_PATH status -s'

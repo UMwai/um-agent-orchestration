@@ -1,0 +1,10 @@
+[Unit]
+Description=Run PR opener every 2 hours
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=2h
+Unit=git-prizer.service
+
+[Install]
+WantedBy=default.target

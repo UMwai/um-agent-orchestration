@@ -1,0 +1,11 @@
+id: TSK-1234
+title: "Add /health endpoint returning {'status':'ok'}"
+description: >
+  Add a FastAPI route GET /health that returns JSON {"status":"ok"}.
+role: backend
+acceptance:
+  tests:
+    - "tests/acceptance/test_sample.py::test_health_ok"
+  lint: true
+  typecheck: true
+target_dir: "backend"

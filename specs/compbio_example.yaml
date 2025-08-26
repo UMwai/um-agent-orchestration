@@ -1,0 +1,13 @@
+id: TSK-CB-101
+title: "Add Nextflow process to QC bulk RNA-seq FASTQs"
+description: >
+  Add an nf process that runs FastQC + MultiQC on FASTQs in s3://research/raw/.
+  Emit summary TSVs, move artifacts to s3://research/qc/. Provide unit tests on
+  tiny fixtures and a README for params.
+role: computational_biologist
+acceptance:
+  lint: true
+  typecheck: true
+  tests:
+    - "tests/acceptance/test_nf_qc.py::test_outputs_exist"
+target_dir: "pipelines"

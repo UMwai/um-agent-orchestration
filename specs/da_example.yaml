@@ -1,0 +1,13 @@
+id: TSK-DA-001
+title: "Build daily trades dataset with DuckDB and Polars"
+description: >
+  Assemble a partitioned Parquet dataset from raw fills and quotes; normalize
+  timestamps to UTC; output to data/curated/trades/. Provide unit tests that
+  validate schema and row counts on a 1-day sample fixture.
+role: data_analyst
+acceptance:
+  lint: true
+  typecheck: true
+  tests:
+    - "tests/acceptance/test_trades_dataset.py::test_schema_and_counts"
+target_dir: "data"

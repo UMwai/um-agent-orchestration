@@ -1,0 +1,9 @@
+[Unit]
+Description=AutoDev Git checkpointer (30m WIP commits)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/um-agent-orchestration
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/usr/bin/python -m gitops.checkpointer

@@ -1,0 +1,80 @@
+repo:
+  path: "${REPO_PATH}"
+  dev_branch: "${DEV_BRANCH}"
+  default_remote: origin
+
+# Local-first by default to honor your preconfigured CLIs.
+providers:
+  order:
+    - "claude_cli"
+    - "codex_cli"
+    - "gemini_cli"
+    - "cursor_cli"
+    - "anthropic_api"
+    - "openai_api"
+
+  claude_cli:
+    mode: "cli"
+    binary: "claude"             # Anthropic Claude Code CLI. Non-interactive via -p.
+    args: ["-p", "--output-format", "text"]  # or "json" if you prefer structured
+    model: "sonnet"              # optional: e.g., "claude-sonnet-4-20250514"
+
+  codex_cli:
+    mode: "cli"
+    binary: "codex"              # OpenAI Codex CLI (terminal agent). Non-interactive via 'exec'.
+    args: ["exec"]               # will append the prompt at the end
+    model: "o4-mini"             # CLI respects config; this is just a hint to include in prompts
+
+  gemini_cli:
+    mode: "cli"
+    binary: "gemini"             # Google Gemini CLI. Non-interactive via -p
+    args: ["-p"]                 # one-shot prompt mode
+    model: "gemini-2.5-pro"      # or gemini-2.5-flash if you want speed
+
+  cursor_cli:
+    mode: "cli"
+    binary: "cursor-agent"       # Cursor CLI. Non-interactive via -p
+    args: ["-p", "--output-format", "text"]
+
+  anthropic_api:
+    mode: "api"
+    model: "claude-3-5-sonnet-latest"
+    max_tokens: 4096
+
+  openai_api:
+    mode: "api"
+    model: "gpt-4o"
+
+hygiene:
+  checkpoint_minutes: 30
+  pr_minutes: 120
+  conventional_commits: true
+
+worktrees:
+  base_dir: "./worktrees"
+
+# Built-in roles (you can delete if you move them to roles/*.yaml)
+roles:
+  backend:
+    branch_prefix: "feat/backend"
+    reviewers: ["@org/backend-team"]
+    prompt: |
+      You are a pragmatic backend engineer. Follow FastAPI+pytest+ruff+mypy conventions.
+  frontend:
+    branch_prefix: "feat/frontend"
+    reviewers: ["@org/frontend-team"]
+    prompt: |
+      You are a product-minded frontend engineer. Use modern React, Vite, and TypeScript.
+  data:
+    branch_prefix: "feat/data"
+    reviewers: ["@org/data-team"]
+    prompt: |
+      You are a data engineer. Prefer Polars over pandas; write modular ETL and unit tests.
+  ml:
+    branch_prefix: "feat/ml"
+    reviewers: ["@org/ml-team"]
+    prompt: |
+      You are an ML engineer. Add tests, deterministic seeds, and metrics logging.
+
+# Directory where extra role YAMLs live (auto-loaded)
+roles_dir: "roles"

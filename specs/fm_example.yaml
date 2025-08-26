@@ -1,0 +1,12 @@
+id: TSK-FM-07
+title: "Implement rolling volatility and drawdown utilities"
+description: >
+  Add a utils module computing rolling stdev, max drawdown, and Calmar ratio.
+  Provide doctests and pytest units; read inputs from sample CSV fixtures.
+role: fund_manager
+acceptance:
+  lint: true
+  typecheck: true
+  tests:
+    - "tests/acceptance/test_risk.py::test_drawdown_metrics"
+target_dir: "quant"

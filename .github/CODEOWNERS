@@ -1,0 +1,21 @@
+# Frontend ownership
+/frontend/ @org/frontend-team
+
+# Backend ownership
+/backend/ @org/backend-team
+
+# Data ownership
+/data/ @org/data-team
+
+# ML ownership
+/ml/ @org/ml-team
+
+# Quant/Finance
+/quant/ @org/pm-team @org/risk
+
+# Pipelines/Bioinformatics
+/pipelines/ @org/research @org/bioinformatics
+
+# Shared
+/.github/ @org/devops-team
+/config/ @org/arch-team
