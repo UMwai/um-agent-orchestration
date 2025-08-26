@@ -279,7 +279,19 @@
             tasksPassed: 128,
             tasksFailed: 11,
             commitsMade: 89,
-            prsOpened: 23
+            prsOpened: 23,
+            prsQueued: 5,
+            conflictsDetected: 2
+        };
+
+        const mockMergeQueue = {
+            active_merge: "PR-123",
+            queue: [
+                { pr_id: "124", branch: "auto/backend/auth-fix", priority: "BUG", status: "queued", conflicts: [] },
+                { pr_id: "125", branch: "auto/frontend/dashboard", priority: "FEATURE", status: "queued", conflicts: [] },
+                { pr_id: "126", branch: "auto/data/analytics", priority: "SECURITY", status: "conflict", conflicts: ["src/auth.py", "config/settings.py"] }
+            ],
+            queue_length: 3
         };
 
         const mockTasks = [
@@ -357,6 +369,7 @@
             const [metrics, setMetrics] = useState(mockMetrics);
             const [tasks, setTasks] = useState(mockTasks);
             const [agents, setAgents] = useState(mockAgents);
+            const [mergeQueue, setMergeQueue] = useState(mockMergeQueue);
             const [newTask, setNewTask] = useState({
                 title: '',
                 description: '',
@@ -417,6 +430,14 @@
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#06b6d4'}}>{metrics.prsOpened}</div>
                             <div className="metric-label">PRs Opened</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.prsQueued}</div>
+                            <div className="metric-label">PRs In Queue</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#ef4444'}}>{metrics.conflictsDetected}</div>
+                            <div className="metric-label">Conflicts Detected</div>
                         </div>
                     </div>
 
@@ -523,30 +544,63 @@
                         </div>
                     </div>
 
-                    <div className="section-card">
-                        <h2 className="section-title">Agent Status ({agents.length} agents)</h2>
-                        <div className="agent-grid">
-                            {agents.map(agent => (
-                                <div key={agent.name} className="agent-card">
-                                    <div className="agent-header">
-                                        <div className="agent-name">{agent.name}</div>
-                                        <div className={`agent-status status-${agent.status}`}></div>
+                    <div className="tasks-section">
+                        <div className="section-card">
+                            <h2 className="section-title">Merge Queue ({mergeQueue.queue_length})</h2>
+                            {mergeQueue.active_merge && (
+                                <div className="task-item running" style={{marginBottom: '16px'}}>
+                                    <div className="task-header">
+                                        <div className="task-title">🔄 Currently Merging</div>
+                                        <div className="task-status status-running">merging</div>
                                     </div>
-                                    <div style={{fontSize: '0.875rem', color: '#94a3b8', marginBottom: '8px'}}>
-                                        Provider: {agent.provider}
+                                    <div className="task-meta">PR: {mergeQueue.active_merge}</div>
+                                </div>
+                            )}
+                            {mergeQueue.queue.map(pr => (
+                                <div key={pr.pr_id} className={`task-item ${pr.status === 'conflict' ? 'failed' : 'queued'}`}>
+                                    <div className="task-header">
+                                        <div className="task-title">PR-{pr.pr_id}</div>
+                                        <div className={`task-status ${pr.status === 'conflict' ? 'status-failed' : 'status-queued'}`}>
+                                            {pr.status}
+                                        </div>
                                     </div>
-                                    {agent.currentTask && (
-                                        <div style={{fontSize: '0.875rem', color: '#3b82f6', marginBottom: '8px'}}>
-                                            Working on: {agent.currentTask}
+                                    <div className="task-meta">
+                                        Priority: {pr.priority} • {pr.branch}
+                                    </div>
+                                    {pr.conflicts.length > 0 && (
+                                        <div style={{color: '#ef4444', fontSize: '0.75rem', marginTop: '8px'}}>
+                                            Conflicts: {pr.conflicts.join(', ')}
                                         </div>
                                     )}
-                                    <ul className="provider-list">
-                                        {agent.capabilities.map(cap => (
-                                            <li key={cap}>• {cap}</li>
-                                        ))}
-                                    </ul>
                                 </div>
                             ))}
+                        </div>
+
+                        <div className="section-card">
+                            <h2 className="section-title">Agent Status ({agents.length} agents)</h2>
+                            <div className="agent-grid">
+                                {agents.map(agent => (
+                                    <div key={agent.name} className="agent-card">
+                                        <div className="agent-header">
+                                            <div className="agent-name">{agent.name}</div>
+                                            <div className={`agent-status status-${agent.status}`}></div>
+                                        </div>
+                                        <div style={{fontSize: '0.875rem', color: '#94a3b8', marginBottom: '8px'}}>
+                                            Provider: {agent.provider}
+                                        </div>
+                                        {agent.currentTask && (
+                                            <div style={{fontSize: '0.875rem', color: '#3b82f6', marginBottom: '8px'}}>
+                                                Working on: {agent.currentTask}
+                                            </div>
+                                        )}
+                                        <ul className="provider-list">
+                                            {agent.capabilities.map(cap => (
+                                                <li key={cap}>• {cap}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 

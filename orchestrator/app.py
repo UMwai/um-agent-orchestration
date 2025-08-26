@@ -1,51 +1,64 @@
 from __future__ import annotations
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+
+from monitoring.metrics import METRICS, expose_metrics_asgi
 from orchestrator.models import TaskSpec, TaskStatus
-from monitoring.metrics import expose_metrics_asgi, METRICS
 
 # Try to use Redis-based dispatcher, fall back to simple dispatcher
 USE_REDIS = False
 enqueue_task = None
 
+
 def setup_dispatcher():
     global USE_REDIS, enqueue_task
     try:
         # Test Redis connection first
-        from redis import Redis
         import os
-        redis_client = Redis(host=os.environ.get("REDIS_HOST", "localhost"), 
-                           port=int(os.environ.get("REDIS_PORT", 6379)))
+
+        from redis import Redis
+
+        redis_client = Redis(
+            host=os.environ.get("REDIS_HOST", "localhost"),
+            port=int(os.environ.get("REDIS_PORT", 6379)),
+        )
         redis_client.ping()  # This will fail if Redis is not available
-        
+
         from orchestrator.dispatcher import enqueue_task as _enqueue_task
-        from orchestrator.queue import jobs_q
+
         enqueue_task = _enqueue_task
         USE_REDIS = True
         print("📊 Using Redis-based task queue")
     except Exception as e:
-        print(f"⚠️  Redis not available ({e.__class__.__name__}: {e}), using minimal task simulation")
+        print(
+            f"⚠️  Redis not available ({e.__class__.__name__}: {e}), using minimal task simulation"
+        )
+        from orchestrator.minimal_dispatcher import TASKS as MINIMAL_TASKS
         from orchestrator.minimal_dispatcher import (
             enqueue_minimal_task,
-            get_minimal_task, get_all_minimal_tasks, 
-            TASKS as MINIMAL_TASKS
+            get_all_minimal_tasks,
+            get_minimal_task,
         )
-        globals().update({
-            'get_simple_task': get_minimal_task,
-            'get_all_simple_tasks': get_all_minimal_tasks,
-            'SIMPLE_TASKS': MINIMAL_TASKS
-        })
+
+        globals().update(
+            {
+                "get_simple_task": get_minimal_task,
+                "get_all_simple_tasks": get_all_minimal_tasks,
+                "SIMPLE_TASKS": MINIMAL_TASKS,
+            }
+        )
         enqueue_task = enqueue_minimal_task
         USE_REDIS = False
 
+
+import json
+from pathlib import Path
+
 # Initialize dispatcher on startup
 setup_dispatcher()
-from typing import List
-import json
-import asyncio
-from pathlib import Path
 
 app = FastAPI(title="AutoDev Orchestrator")
 app.mount("/metrics", expose_metrics_asgi())
@@ -65,7 +78,8 @@ if dashboard_path.exists():
     app.mount("/static", StaticFiles(directory=str(dashboard_path)), name="static")
 
 TASKS: dict[str, TaskStatus] = {}
-connected_clients: List[WebSocket] = []
+connected_clients: list[WebSocket] = []
+
 
 @app.post("/tasks", response_model=dict)
 async def submit_task(spec: TaskSpec):
@@ -74,14 +88,12 @@ async def submit_task(spec: TaskSpec):
         id=spec.id, role=spec.role, branch=f"auto/{spec.role}/{spec.id}", state="queued"
     )
     TASKS[spec.id] = task_status
-    
+
     # Broadcast update to connected dashboard clients
-    await broadcast_update({
-        "type": "task_submitted",
-        "task": task_status.dict()
-    })
-    
+    await broadcast_update({"type": "task_submitted", "task": task_status.dict()})
+
     return {"job_id": job_id, "task_id": spec.id}
+
 
 @app.get("/tasks/{task_id}", response_model=TaskStatus)
 def get_task(task_id: str):
@@ -91,16 +103,19 @@ def get_task(task_id: str):
         task = get_simple_task(task_id)
         if task is None:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=404, detail="Task not found")
         return task
 
-@app.get("/tasks", response_model=List[TaskStatus])
+
+@app.get("/tasks", response_model=list[TaskStatus])
 def get_all_tasks():
     """Get all tasks with their current status"""
     if USE_REDIS:
         return list(TASKS.values())
     else:
         return get_all_simple_tasks()
+
 
 @app.get("/api/metrics")
 def get_metrics_summary():
@@ -114,6 +129,7 @@ def get_metrics_summary():
         "prs_opened": METRICS.prs_opened._value._value,
     }
 
+
 @app.get("/agents/status")
 def get_agent_status():
     """Get status of all available agents and providers"""
@@ -125,23 +141,24 @@ def get_agent_status():
             "provider": "claude_interactive",
             "status": "online",
             "capabilities": ["Full Access", "Code Generation", "File Operations"],
-            "current_task": None
+            "current_task": None,
         },
         {
-            "name": "Codex CLI", 
+            "name": "Codex CLI",
             "provider": "codex_cli",
             "status": "online",
             "capabilities": ["Code Generation", "Testing", "Debugging"],
-            "current_task": None
+            "current_task": None,
         },
         {
             "name": "Backend Agent",
-            "provider": "anthropic_api", 
+            "provider": "anthropic_api",
             "status": "online",
             "capabilities": ["FastAPI", "Database", "Testing"],
-            "current_task": None
-        }
+            "current_task": None,
+        },
     ]
+
 
 @app.get("/", response_class=HTMLResponse)
 def dashboard():
@@ -150,6 +167,7 @@ def dashboard():
     if dashboard_file.exists():
         return HTMLResponse(dashboard_file.read_text())
     return HTMLResponse("<h1>Dashboard not found</h1>")
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -165,6 +183,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         connected_clients.remove(websocket)
 
+
 async def broadcast_update(message: dict):
     """Broadcast updates to all connected dashboard clients"""
     if connected_clients:
@@ -172,9 +191,61 @@ async def broadcast_update(message: dict):
         for client in connected_clients:
             try:
                 await client.send_text(json.dumps(message))
-            except:
+            except Exception:
                 disconnected.append(client)
-        
+
         # Clean up disconnected clients
         for client in disconnected:
             connected_clients.remove(client)
+
+
+# Merge coordinator endpoints (lazy loaded to avoid circular imports)
+@app.post("/merge/queue")
+async def add_to_merge_queue(pr_id: str, branch: str, priority: str = "feature"):
+    """Add PR to merge queue"""
+    from gitops.merge_coordinator import MergePriority, get_merge_coordinator
+
+    merge_coordinator = get_merge_coordinator()
+
+    priority_map = {
+        "security": MergePriority.SECURITY,
+        "bug": MergePriority.BUG,
+        "feature": MergePriority.FEATURE,
+        "docs": MergePriority.DOCS,
+    }
+    priority_enum = priority_map.get(priority.lower(), MergePriority.FEATURE)
+    result = await merge_coordinator.add_to_queue(pr_id, branch, priority_enum)
+    return {"message": result}
+
+
+@app.post("/merge/process")
+async def process_merge_queue():
+    """Process next item in merge queue"""
+    from gitops.merge_coordinator import get_merge_coordinator
+
+    merge_coordinator = get_merge_coordinator()
+
+    result = await merge_coordinator.process_merge_queue()
+    await broadcast_update({"type": "merge_queue_update", "data": result})
+    return result
+
+
+@app.get("/merge/status")
+async def get_merge_status():
+    """Get current merge queue status"""
+    from gitops.merge_coordinator import get_merge_coordinator
+
+    merge_coordinator = get_merge_coordinator()
+
+    return merge_coordinator.get_queue_status()
+
+
+@app.post("/merge/rebase-all")
+async def rebase_all_branches():
+    """Trigger rebase of all pending PRs"""
+    from gitops.merge_coordinator import get_merge_coordinator
+
+    merge_coordinator = get_merge_coordinator()
+
+    await merge_coordinator.rebase_pending_prs()
+    return {"message": "Rebase triggered for all pending PRs"}

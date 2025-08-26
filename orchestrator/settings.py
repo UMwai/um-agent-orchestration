@@ -1,14 +1,18 @@
 from __future__ import annotations
+
 import os
-from pydantic import BaseModel
+
 import yaml
+from pydantic import BaseModel
+
 
 class ProviderCfg(BaseModel):
-    mode: str            # "cli" or "api"
+    mode: str  # "cli" or "api"
     binary: str | None = None
     args: list[str] | None = None
     model: str | None = None
     max_tokens: int | None = None
+
 
 class Settings(BaseModel):
     repo_path: str
@@ -22,8 +26,9 @@ class Settings(BaseModel):
     roles: dict
     roles_dir: str
 
+
 def load_settings() -> Settings:
-    with open("config/config.yaml", "r", encoding="utf-8") as f:
+    with open("config/config.yaml", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
     repo = raw["repo"]
@@ -31,7 +36,11 @@ def load_settings() -> Settings:
     hygiene = raw["hygiene"]
     worktrees = raw["worktrees"]
 
-    prov_cfg = {name: ProviderCfg(**cfg) for name, cfg in providers.items() if name != "order"}
+    prov_cfg = {
+        name: ProviderCfg(**cfg)
+        for name, cfg in providers.items()
+        if name not in ["order", "full_access_order"]
+    }
 
     return Settings(
         repo_path=os.path.expandvars(repo["path"]),

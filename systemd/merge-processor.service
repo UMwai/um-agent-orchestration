@@ -1,0 +1,12 @@
+[Unit]
+Description=AutoDev Merge Queue Processor
+After=network.target
+
+[Service]
+Type=oneshot
+User=%i
+WorkingDirectory=/home/umwai/um-agent-orchestration
+Environment="PATH=/home/umwai/um-agent-orchestration/.venv/bin:/usr/bin:/bin"
+ExecStart=/home/umwai/um-agent-orchestration/scripts/merge_queue_processor.py
+StandardOutput=journal
+StandardError=journal

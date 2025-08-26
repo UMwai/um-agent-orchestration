@@ -3,6 +3,11 @@ repo:
   dev_branch: "${DEV_BRANCH}"
   default_remote: origin
 
+# Server configuration
+server:
+  port: 8001  # Changed from 8000 to avoid conflicts with other repos
+  host: "0.0.0.0"
+
 # Local-first by default to honor your preconfigured CLIs.
 providers:
   order:
@@ -82,6 +87,22 @@ hygiene:
 
 worktrees:
   base_dir: "./worktrees"
+
+# Multi-PR merge conflict resolution strategy
+merge_strategy:
+  mode: "sequential_rebase"  # Sequential processing with auto-rebase
+  auto_rebase: true          # Automatically rebase branches before merging
+  conflict_resolution: "auto" # auto | escalate | manual
+  merge_order: ["security", "bug", "feature", "docs"]  # Priority order
+  process_interval_minutes: 5  # How often to process merge queue
+  max_concurrent_rebases: 3    # Limit concurrent rebase operations
+  
+# Merge queue configuration  
+merge_queue:
+  enabled: true
+  auto_process: true         # Automatically process queue
+  notify_conflicts: true     # Send notifications for unresolved conflicts
+  escalation_timeout: 60     # Minutes before escalating conflicts
 
 # Built-in roles (you can delete if you move them to roles/*.yaml)
 roles:
