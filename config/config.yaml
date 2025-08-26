@@ -13,6 +13,13 @@ providers:
     - "anthropic_api"
     - "openai_api"
 
+  # Full access mode providers (interactive/session mode)
+  full_access_order:
+    - "claude_interactive"
+    - "codex_interactive"
+    - "claude_cli"
+    - "anthropic_api"
+
   claude_cli:
     mode: "cli"
     binary: "claude"             # Anthropic Claude Code CLI. Non-interactive via -p.
@@ -44,6 +51,29 @@ providers:
   openai_api:
     mode: "api"
     model: "gpt-4o"
+
+  # Interactive/Full Access Mode Providers
+  claude_interactive:
+    mode: "interactive"
+    binary: "claude"
+    args: ["--dangerously-skip-permissions"]  # Full access mode bypassing permissions
+    model: "sonnet"
+    description: "Claude Code in full access mode with permissions bypassed"
+
+  codex_interactive:
+    mode: "interactive"
+    binary: "codex"
+    args: ["--ask-for-approval", "never", "--sandbox", "danger-full-access"]
+    model: "o4-mini"
+    description: "Codex in full access mode with auto-approval and full sandbox access"
+
+# Full access mode configuration
+full_access:
+  enabled: true
+  default_provider_order: "full_access_order"
+  repo_context: true  # Include full repository context
+  allow_file_operations: true  # Enable create/read/write/delete operations
+  allow_system_commands: true  # Enable system command execution
 
 hygiene:
   checkpoint_minutes: 30

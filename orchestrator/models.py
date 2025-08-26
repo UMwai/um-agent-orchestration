@@ -9,6 +9,8 @@ class TaskSpec(BaseModel):
     role: str  # e.g., "backend", "data_analyst", "computational_biologist", "fund_manager"
     acceptance: Dict[str, Any] = Field(default_factory=dict)
     target_dir: str = "."
+    full_access: bool = False  # Enable full access mode
+    provider_override: Optional[str] = None  # Override specific provider
 
 class TaskStatus(BaseModel):
     id: str

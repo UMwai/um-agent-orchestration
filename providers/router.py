@@ -8,15 +8,25 @@ from providers import (
     codex_cli_provider,
     gemini_cli_provider,
     cursor_cli_provider,
+    claude_interactive_provider,
+    codex_interactive_provider,
 )
 
-def call_models(prompt: str, cwd: Optional[str] = None) -> str:
+def call_models(prompt: str, cwd: Optional[str] = None, full_access: bool = False) -> str:
     s = load_settings()
-    for name in s.provider_order:
+    
+    # Choose provider order based on full_access mode
+    provider_order = s.full_access_order if full_access and hasattr(s, 'full_access_order') else s.provider_order
+    
+    for name in provider_order:
         cfg = s.providers.get(name)
         if not cfg:
             continue
         try:
+            if name == "claude_interactive" and cfg.mode == "interactive":
+                return claude_interactive_provider.call_claude_interactive(prompt, cfg, cwd=cwd)
+            if name == "codex_interactive" and cfg.mode == "interactive":
+                return codex_interactive_provider.call_codex_interactive(prompt, cfg, cwd=cwd)
             if name == "claude_cli" and cfg.mode == "cli":
                 return claude_cli_provider.call_claude_cli(prompt, cfg, cwd=cwd)
             if name == "codex_cli" and cfg.mode == "cli":
