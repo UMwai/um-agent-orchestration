@@ -27,11 +27,23 @@ make monitoring         # Start Prometheus/Grafana stack
 
 # Git hygiene automation
 make enable-timers      # Enable auto-commit (30min) and auto-PR (2h) timers
+
+# Full access mode setup
+./scripts/init-full-access.sh  # Interactive setup for full access mode
 ```
 
 **Single test execution:**
 ```bash
 pytest tests/acceptance/test_sample.py::test_specific_function
+```
+
+**Full access mode testing:**
+```bash
+# Test Claude full access capabilities
+claude --dangerously-skip-permissions -p "Analyze this repository structure"
+
+# Test Codex full access capabilities
+codex --ask-for-approval never --sandbox danger-full-access exec "Review codebase architecture"
 ```
 
 ## Architecture Overview
@@ -47,6 +59,7 @@ pytest tests/acceptance/test_sample.py::test_specific_function
 
 ### Key Design Patterns
 - **CLI-first approach**: Prefers local CLI tools (`claude`, `codex`, `gemini`, `cursor-agent`) over APIs
+- **Full access mode**: Supports `--dangerously-skip-permissions` (Claude) and `--sandbox danger-full-access` (Codex)
 - **Git worktrees**: Each task runs in isolated worktree to prevent conflicts
 - **Dynamic roles**: Add new roles via YAML files in `roles/` directory without code changes
 - **Provider fallback**: Tries providers in order until one succeeds
@@ -68,9 +81,9 @@ pytest tests/acceptance/test_sample.py::test_specific_function
 
 **Agent development**: Extend `agents/base.py` Agent class, implement `plan_and_execute()` method
 
-**Provider integration**: Add new providers in `providers/` following CLI or API pattern
+**Provider integration**: Add new providers in `providers/` following CLI or API pattern. Full access providers use `mode: "interactive"` with appropriate CLI flags.
 
-**Role customization**: Create YAML files in `roles/` with name, branch_prefix, reviewers, and prompt
+**Role customization**: Create YAML files in `roles/` with name, branch_prefix, reviewers, and prompt. Can specify `full_access: true` for unrestricted tasks.
 
 **Git workflow**: Always work in feature branches with conventional commit messages. The system uses git worktrees - never modify the root checkout directly.
 

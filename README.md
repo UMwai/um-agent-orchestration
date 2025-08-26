@@ -5,6 +5,7 @@ A complete, production-grade autonomous multi-agent coding system that orchestra
 ## 🚀 Key Features
 
 - **🔧 Local-first CLI support** - Uses your pre-configured `claude`, `codex`, `gemini`, `cursor-agent` commands
+- **🚨 Full access mode** - Claude Code (`--dangerously-skip-permissions`) and Codex (`--sandbox danger-full-access`) support
 - **👥 Dynamic role system** - Add unlimited roles via YAML files (data_analyst, computational_biologist, fund_manager, etc.)
 - **🔄 Git hygiene** - Auto-commits every 30min, auto-PRs every 2h, git worktrees for parallel work
 - **📊 Monitoring** - Prometheus metrics, optional Grafana/Loki logging
@@ -15,6 +16,7 @@ A complete, production-grade autonomous multi-agent coding system that orchestra
 ## 📋 Table of Contents
 
 - [Quick Start](#quick-start)
+- [Full Access Mode](#full-access-mode)
 - [How AutoDev Works](#how-autodev-works)
 - [Architecture](#architecture)
 - [Task Submission & Management](#task-submission--management)
@@ -76,6 +78,104 @@ curl -X POST http://localhost:8000/tasks \
 
 ```bash
 make enable-timers  # Auto-commit every 30min, auto-PR every 2h
+```
+
+## 🚨 Full Access Mode
+
+AutoDev supports **full access mode** for Claude Code and Codex, allowing unrestricted autonomous development with bypassed safety permissions.
+
+### Quick Setup
+
+```bash
+# Initialize full access mode (interactive setup)
+./scripts/init-full-access.sh
+```
+
+### Manual Configuration
+
+Enable full access by configuring providers in `config/config.yaml`:
+
+```yaml
+providers:
+  full_access_order:
+    - "claude_interactive"
+    - "codex_interactive"
+    - "claude_cli"
+    - "anthropic_api"
+
+  claude_interactive:
+    mode: "interactive"
+    binary: "claude"
+    args: ["--dangerously-skip-permissions"]
+    description: "Claude Code with bypassed permissions"
+
+  codex_interactive:
+    mode: "interactive" 
+    binary: "codex"
+    args: ["--ask-for-approval", "never", "--sandbox", "danger-full-access"]
+    description: "Codex with auto-approval and full sandbox access"
+
+full_access:
+  enabled: true
+  default_provider_order: "full_access_order"
+  repo_context: true
+  allow_file_operations: true
+  allow_system_commands: true
+```
+
+### Using Full Access Mode
+
+Submit tasks with `full_access: true`:
+
+```yaml
+id: ADVANCED-TASK-001
+title: "Complex Autonomous Development Task"
+description: "Implement full stack feature with database migrations, tests, and deployment"
+role: backend
+full_access: true  # Enable full access mode
+provider_override: "claude_interactive"  # Optional: force specific provider
+acceptance:
+  tests: ["tests/integration/"]
+  lint: true
+  typecheck: true
+```
+
+Or via API:
+
+```bash
+curl -X POST http://localhost:8000/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "TASK-001",
+    "title": "Full Access Task",
+    "description": "Task requiring unrestricted access",
+    "role": "backend",
+    "full_access": true,
+    "provider_override": "claude_interactive"
+  }'
+```
+
+### Full Access Providers
+
+- **`claude_interactive`** - Claude Code with `--dangerously-skip-permissions`
+- **`codex_interactive`** - Codex with `--ask-for-approval never --sandbox danger-full-access`
+
+### Security Considerations
+
+⚠️ **WARNING**: Full access mode bypasses safety restrictions:
+- Use only in trusted development environments
+- Agents can execute system commands and modify any files
+- Suitable for autonomous development but requires careful consideration
+- Consider using for complex tasks that need unrestricted repository access
+
+### Testing Full Access
+
+```bash
+# Test Claude full access
+claude --dangerously-skip-permissions -p "Test full access capabilities"
+
+# Test Codex full access  
+codex --ask-for-approval never --sandbox danger-full-access exec "Test full access capabilities"
 ```
 
 ## 🔍 How AutoDev Works
@@ -310,6 +410,7 @@ Edit `config/config.yaml` to set provider priority:
 
 ```yaml
 providers:
+  # Normal mode provider order
   order:
     - "claude_cli"      # Try Claude CLI first
     - "codex_cli"       # Fallback to Codex CLI
@@ -317,6 +418,13 @@ providers:
     - "cursor_cli"      # Then Cursor CLI
     - "anthropic_api"   # API fallback
     - "openai_api"      # Final fallback
+
+  # Full access mode provider order
+  full_access_order:
+    - "claude_interactive"  # Claude with --dangerously-skip-permissions
+    - "codex_interactive"   # Codex with danger-full-access
+    - "claude_cli"          # Standard CLI fallback
+    - "anthropic_api"       # API fallback
 ```
 
 ### CLI Provider Setup
@@ -328,9 +436,15 @@ Ensure CLI tools are installed and configured:
 claude --version
 claude -p "test prompt"
 
+# Claude Code - Full Access Mode
+claude --dangerously-skip-permissions -p "test prompt"
+
 # OpenAI Codex CLI  
 codex --version
 codex exec "test prompt"
+
+# Codex - Full Access Mode
+codex --ask-for-approval never --sandbox danger-full-access exec "test prompt"
 
 # Gemini CLI
 gemini --version
@@ -360,12 +474,31 @@ DEV_BRANCH=main
 ### Provider-Specific Configuration
 
 ```yaml
-# CLI providers
+# Standard CLI providers
 claude_cli:
   mode: "cli"
   binary: "claude"
   args: ["-p", "--output-format", "text"]
-  model: "sonnet"  # optional model hint
+  model: "sonnet"
+
+codex_cli:
+  mode: "cli"
+  binary: "codex"
+  args: ["exec"]
+  model: "o4-mini"
+
+# Full access CLI providers
+claude_interactive:
+  mode: "interactive"
+  binary: "claude"
+  args: ["--dangerously-skip-permissions"]
+  description: "Claude Code with bypassed permissions"
+
+codex_interactive:
+  mode: "interactive"
+  binary: "codex"
+  args: ["--ask-for-approval", "never", "--sandbox", "danger-full-access"]
+  description: "Codex with auto-approval and full sandbox access"
 
 # API providers  
 anthropic_api:

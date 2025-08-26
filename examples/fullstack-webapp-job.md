@@ -16,6 +16,9 @@ cd um-agent-orchestration
 make install
 cp .env.example .env
 # Edit .env file with your API keys and configuration
+
+# Optional: Setup full access mode for unrestricted development
+./scripts/init-full-access.sh
 ```
 
 ### 2. Start the Orchestrator System
@@ -57,10 +60,35 @@ description: >
   - API integration for CRUD operations
   - Unit tests with React Testing Library
 role: frontend
+full_access: false  # Standard mode - safe for UI development
 acceptance:
   tests:
     - "tests/frontend/test_todo_components.test.tsx"
     - "tests/frontend/test_app_integration.test.tsx"
+  lint: true
+  typecheck: true
+target_dir: "frontend"
+```
+
+**File: `examples/frontend-task-full-access.yaml`** (Advanced Version)
+```yaml
+id: WEBAPP-FRONTEND-002
+title: "Build Advanced React Todo App with Full Stack Integration"
+description: >
+  Create a comprehensive React TypeScript frontend with full development autonomy:
+  - Complete project scaffolding with Vite/Next.js
+  - Advanced state management with Zustand or Redux Toolkit
+  - E2E testing with Playwright
+  - Automated deployment configuration
+  - Performance optimization and bundling
+  - Full CI/CD pipeline setup
+role: frontend
+full_access: true  # Enable full access for complex setup
+provider_override: "claude_interactive"  # Force Claude with full permissions
+acceptance:
+  tests:
+    - "tests/frontend/**/*.test.tsx"
+    - "tests/e2e/**/*.spec.ts"
   lint: true
   typecheck: true
 target_dir: "frontend"
@@ -83,6 +111,8 @@ description: >
   - Authentication middleware
   - Comprehensive test coverage
 role: backend
+full_access: true  # Backend often needs system access for DB setup
+provider_override: "codex_interactive"  # Use Codex for backend development
 acceptance:
   tests:
     - "tests/backend/test_todo_api.py"
@@ -114,6 +144,45 @@ acceptance:
   lint: true
   typecheck: true
 target_dir: "analytics"
+```
+
+## Full Access Mode vs Standard Mode
+
+### When to Use Full Access Mode
+
+**Use Full Access Mode (`full_access: true`) for:**
+- Complex project scaffolding and setup
+- Database migrations and schema changes  
+- System configuration and deployment scripts
+- CI/CD pipeline configuration
+- Advanced tooling setup (Docker, K8s, etc.)
+- Tasks requiring unrestricted file system access
+
+**Use Standard Mode (`full_access: false` or omitted) for:**
+- Simple feature development
+- UI/UX components and styling
+- Business logic implementation
+- Unit test writing
+- Documentation updates
+
+### Full Access Mode Examples
+
+```yaml
+# Complex infrastructure task
+id: WEBAPP-DEVOPS-001
+title: "Setup Production Infrastructure"
+description: "Configure Docker, K8s, CI/CD, monitoring, and deployment"
+role: backend
+full_access: true
+provider_override: "claude_interactive"
+
+# Advanced frontend with build system changes
+id: WEBAPP-FRONTEND-ADVANCED-001  
+title: "Migrate to Next.js with Custom Webpack Config"
+description: "Complete migration from CRA to Next.js with custom tooling"
+role: frontend
+full_access: true
+provider_override: "codex_interactive"
 ```
 
 ## Submitting Jobs
