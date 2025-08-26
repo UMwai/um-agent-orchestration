@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoDev 24/7 Agent Orchestration Dashboard</title>
+    <title>Agent UM-7 - Classified Operations Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -69,6 +70,13 @@
             font-size: 0.875rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+        }
+        
+        .metric-repo {
+            color: #475569;
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-family: 'Courier New', monospace;
         }
         
         .tasks-section {
@@ -264,6 +272,204 @@
         .submit-button:hover {
             background: #059669;
         }
+        
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .toggle-btn {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        
+        .toggle-btn:hover {
+            background: #475569;
+        }
+        
+        .toggle-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        
+        .cli-view {
+            background: #0f1419;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            color: #e2e8f0;
+        }
+        
+        .cli-header {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+        
+        .cli-commands {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .cli-command {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 12px;
+        }
+        
+        .cli-command-title {
+            color: #f59e0b;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .cli-command-code {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            word-break: break-all;
+        }
+        
+        .specs-section {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+        }
+        
+        .spec-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .spec-item {
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .spec-item:hover {
+            background: #475569;
+            border-color: #64748b;
+        }
+        
+        .spec-item.selected {
+            background: #3b82f6;
+            border-color: #2563eb;
+        }
+        
+        .spec-title {
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 4px;
+        }
+        
+        .spec-summary {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        
+        .spec-content {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        .spec-phases {
+            margin: 16px 0;
+        }
+        
+        .phase-item {
+            background: #1e293b;
+            border-left: 3px solid #3b82f6;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+        }
+        
+        .phase-title {
+            font-weight: 600;
+            color: #3b82f6;
+            font-size: 0.875rem;
+        }
+        
+        .phase-details {
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+        
+        .responsibilities-list {
+            margin: 16px 0;
+        }
+        
+        .responsibility-item {
+            background: #334155;
+            border-radius: 4px;
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+        }
+        
+        .spec-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        
+        .spec-tab {
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .spec-tab:hover {
+            background: #475569;
+        }
+        
+        .spec-tab.active {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
+        }
+        
     </style>
 </head>
 <body>
@@ -274,6 +480,11 @@
 
         // Mock data for demonstration - would be replaced with API calls
         const mockMetrics = {
+            repository: {
+                name: "um-agent-orchestration",
+                path: "/home/umwai/um-agent-orchestration", 
+                branch: "main"
+            },
             tasksEnqueued: 142,
             tasksRunning: 3,
             tasksPassed: 128,
@@ -367,32 +578,214 @@
 
         function Dashboard() {
             const [metrics, setMetrics] = useState(mockMetrics);
-            const [tasks, setTasks] = useState(mockTasks);
-            const [agents, setAgents] = useState(mockAgents);
-            const [mergeQueue, setMergeQueue] = useState(mockMergeQueue);
+            const [tasks, setTasks] = useState([]);
+            const [agents, setAgents] = useState([]);
+            const [mergeQueue, setMergeQueue] = useState({currently_merging: null, queue: [], queue_length: 0});
+            const [repositories, setRepositories] = useState([]);
+            const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' or 'cli'
             const [newTask, setNewTask] = useState({
                 title: '',
                 description: '',
                 role: 'generic',
+                repositoryUrl: '',
+                baseBranch: '',
                 fullAccess: false
             });
+            const [availableBranches, setAvailableBranches] = useState([]);
+            const [repositorySpecs, setRepositorySpecs] = useState([]);
+            const [selectedSpec, setSelectedSpec] = useState(null);
+            const [specViewMode, setSpecViewMode] = useState('summary'); // 'summary' | 'phases' | 'content'
+
+            // Fetch real data from APIs
+            const fetchMetrics = async () => {
+                try {
+                    const response = await fetch('/api/metrics');
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Map API response to dashboard format
+                        setMetrics({
+                            repository: data.repository || mockMetrics.repository,
+                            tasksEnqueued: data.tasks_enqueued || 0,
+                            tasksRunning: data.tasks_started || 0,
+                            tasksPassed: data.tasks_succeeded || 0,
+                            tasksFailed: data.tasks_failed || 0,
+                            commitsMade: data.commits_made || 0,
+                            prsOpened: data.prs_opened || 0,
+                            prsQueued: data.prs_queued || 0,
+                            conflictsDetected: data.conflicts_detected || 0
+                        });
+                    }
+                } catch (error) {
+                    console.log('Using mock data, API not available:', error);
+                }
+            };
+
+            const fetchTasks = async () => {
+                try {
+                    const response = await fetch('/tasks');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setTasks(data);
+                    }
+                } catch (error) {
+                    console.log('Could not fetch tasks:', error);
+                }
+            };
+
+            const fetchAgents = async () => {
+                try {
+                    const response = await fetch('/agents/status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAgents(data);
+                    }
+                } catch (error) {
+                    console.log('Could not fetch agent status:', error);
+                }
+            };
+
+            const fetchMergeQueue = async () => {
+                try {
+                    const response = await fetch('/merge/status');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setMergeQueue(data);
+                    }
+                } catch (error) {
+                    console.log('Could not fetch merge queue:', error);
+                }
+            };
+
+            // Fetch available repositories
+            const fetchRepositories = async () => {
+                try {
+                    const response = await fetch('/api/repositories');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setRepositories(data.repositories);
+                    }
+                } catch (error) {
+                    console.log('Could not fetch repositories:', error);
+                }
+            };
+
+            // Fetch branches for selected repository
+            const fetchBranches = async (repoName) => {
+                if (!repoName) {
+                    repoName = 'um-agent-orchestration';
+                }
+                try {
+                    const response = await fetch(`/api/repositories/${repoName}/branches`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setAvailableBranches(data.branches || []);
+                    }
+                } catch (error) {
+                    console.log('Could not fetch branches:', error);
+                    setAvailableBranches([]);
+                }
+            };
+
+            // Fetch specs for selected repository
+            const fetchSpecs = async (repoName) => {
+                if (!repoName) {
+                    repoName = 'um-agent-orchestration';
+                }
+                try {
+                    const response = await fetch(`/api/repositories/${repoName}/specs`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setRepositorySpecs(data.specs || []);
+                    }
+                } catch (error) {
+                    console.log('Could not fetch specs:', error);
+                    setRepositorySpecs([]);
+                }
+            };
+
+            // Handle repository selection change
+            const handleRepositoryChange = (repositoryUrl) => {
+                setNewTask({...newTask, repositoryUrl, baseBranch: ''});
+                setSelectedSpec(null);
+                setRepositorySpecs([]);
+                if (repositoryUrl) {
+                    const repoName = repositoryUrl.split('/').pop();
+                    fetchBranches(repoName);
+                    fetchSpecs(repoName);
+                } else {
+                    fetchBranches('um-agent-orchestration');
+                    fetchSpecs('um-agent-orchestration');
+                }
+            };
+
+            // Handle spec selection
+            const handleSpecSelect = (spec) => {
+                setSelectedSpec(spec);
+                // Auto-populate task title from spec if empty
+                if (!newTask.title) {
+                    setNewTask({...newTask, title: `Implement: ${spec.title}`});
+                }
+            };
+
+            // Load data on mount and set up refresh interval
+            React.useEffect(() => {
+                fetchMetrics();
+                fetchTasks();
+                fetchAgents();
+                fetchMergeQueue();
+                fetchRepositories();
+                fetchBranches('um-agent-orchestration'); // Load branches for current repo
+                fetchSpecs('um-agent-orchestration'); // Load specs for current repo
+                
+                const interval = setInterval(() => {
+                    fetchMetrics();
+                    fetchTasks();
+                    fetchAgents();
+                    fetchMergeQueue();
+                }, 30000); // Refresh every 30s
+                return () => clearInterval(interval);
+            }, []);
 
             const handleSubmitTask = async (e) => {
                 e.preventDefault();
-                // Would normally send to API
-                const task = {
-                    id: `task-${Date.now()}`,
-                    ...newTask,
-                    status: 'queued',
-                    branch: `feat/${newTask.role}/${newTask.title.toLowerCase().replace(/\s+/g, '-')}`,
-                    createdAt: new Date().toISOString()
-                };
-                setTasks([...tasks, task]);
-                setNewTask({ title: '', description: '', role: 'generic', fullAccess: false });
+                try {
+                    const taskSpec = {
+                        id: `task-${Date.now()}`,
+                        title: newTask.title,
+                        description: newTask.description,
+                        role: newTask.role,
+                        full_access: newTask.fullAccess,
+                        repository_url: newTask.repositoryUrl || null,
+                        base_branch: newTask.baseBranch || null
+                    };
+                    
+                    const response = await fetch('/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(taskSpec)
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('Task submitted:', result);
+                        // Reset form
+                        setNewTask({ title: '', description: '', role: 'generic', repositoryUrl: '', baseBranch: '', fullAccess: false });
+                        // Refresh data to show updated counts and new task
+                        fetchMetrics();
+                        fetchTasks();
+                    } else {
+                        console.error('Failed to submit task');
+                    }
+                } catch (error) {
+                    console.error('Error submitting task:', error);
+                }
             };
 
             const refreshData = () => {
-                // Would normally fetch from API
+                fetchMetrics();
+                fetchTasks();
+                fetchAgents();
+                fetchMergeQueue();
                 console.log('Refreshing dashboard data...');
             };
 
@@ -402,42 +795,74 @@
             return (
                 <div className="dashboard">
                     <div className="header">
-                        <h1>🤖 AutoDev Orchestrator</h1>
-                        <p>24/7 Autonomous Agent Monitoring Dashboard</p>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                            <div>
+                                <h1>🎯 Agent UM-7</h1>
+                                <p>Underground Mission Unit 7 • Classified Operations Dashboard</p>
+                                <div style={{marginTop: '12px', fontSize: '0.875rem', color: '#94a3b8'}}>
+                                    📁 Repository: <span style={{color: '#3b82f6'}}>{metrics.repository?.name || 'unknown'}</span> • 
+                                    🌿 Branch: <span style={{color: '#10b981'}}>{metrics.repository?.branch || 'unknown'}</span>
+                                </div>
+                            </div>
+                            <div className="view-toggle">
+                                <button 
+                                    onClick={() => setViewMode('dashboard')}
+                                    className={`toggle-btn ${viewMode === 'dashboard' ? 'active' : ''}`}
+                                >
+                                    📊 Dashboard
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('cli')}
+                                    className={`toggle-btn ${viewMode === 'cli' ? 'active' : ''}`}
+                                >
+                                    💻 CLI
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
+                    {viewMode === 'dashboard' ? (
+                        <>
                     <div className="metrics-grid">
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.tasksEnqueued}</div>
                             <div className="metric-label">Total Enqueued</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#3b82f6'}}>{metrics.tasksRunning}</div>
                             <div className="metric-label">Currently Running</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#10b981'}}>{metrics.tasksPassed}</div>
                             <div className="metric-label">Completed Successfully</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#ef4444'}}>{metrics.tasksFailed}</div>
                             <div className="metric-label">Failed Tasks</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#8b5cf6'}}>{metrics.commitsMade}</div>
                             <div className="metric-label">Auto Commits</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#06b6d4'}}>{metrics.prsOpened}</div>
                             <div className="metric-label">PRs Opened</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.prsQueued}</div>
                             <div className="metric-label">PRs In Queue</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#ef4444'}}>{metrics.conflictsDetected}</div>
                             <div className="metric-label">Conflicts Detected</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                     </div>
 
@@ -472,6 +897,34 @@
                                 </div>
                             </div>
                             <div className="form-group">
+                                <label>Target Repository</label>
+                                <select
+                                    value={newTask.repositoryUrl}
+                                    onChange={(e) => handleRepositoryChange(e.target.value)}
+                                >
+                                    <option value="">Current Repository (um-agent-orchestration)</option>
+                                    {repositories.map(repo => (
+                                        <option key={repo.name} value={repo.url}>
+                                            {repo.name} {repo.has_specs ? '📋' : ''} ({repo.current_branch})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Base Branch (optional)</label>
+                                <select
+                                    value={newTask.baseBranch}
+                                    onChange={(e) => setNewTask({...newTask, baseBranch: e.target.value})}
+                                >
+                                    <option value="">Default (main/master)</option>
+                                    {availableBranches.map(branch => (
+                                        <option key={branch} value={branch}>
+                                            {branch}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
                                 <label>Detailed Description</label>
                                 <textarea
                                     value={newTask.description}
@@ -496,6 +949,110 @@
                             </button>
                         </form>
                     </div>
+
+                    {repositorySpecs.length > 0 && (
+                        <div className="specs-section">
+                            <h2 className="section-title">📋 Project Specs & Planning ({repositorySpecs.length} specs)</h2>
+                            <div className="specs-grid">
+                                <div>
+                                    <h3 style={{color: '#f1f5f9', marginBottom: '12px', fontSize: '1rem'}}>Available Specs</h3>
+                                    <div className="spec-list">
+                                        {repositorySpecs.map(spec => (
+                                            <div 
+                                                key={spec.filename}
+                                                className={`spec-item ${selectedSpec?.filename === spec.filename ? 'selected' : ''}`}
+                                                onClick={() => handleSpecSelect(spec)}
+                                            >
+                                                <div className="spec-title">{spec.title}</div>
+                                                <div className="spec-summary">{spec.summary}</div>
+                                                <div style={{fontSize: '0.75rem', color: '#64748b', marginTop: '4px'}}>
+                                                    {spec.filename} • {(spec.size/1024).toFixed(1)}kb
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+                                        <h3 style={{color: '#f1f5f9', fontSize: '1rem'}}>
+                                            {selectedSpec ? `📄 ${selectedSpec.title}` : 'Select a spec to review'}
+                                        </h3>
+                                        {selectedSpec && (
+                                            <div style={{display: 'flex', gap: '4px'}}>
+                                                <div 
+                                                    className={`spec-tab ${specViewMode === 'summary' ? 'active' : ''}`}
+                                                    onClick={() => setSpecViewMode('summary')}
+                                                >
+                                                    📋 Summary
+                                                </div>
+                                                <div 
+                                                    className={`spec-tab ${specViewMode === 'phases' ? 'active' : ''}`}
+                                                    onClick={() => setSpecViewMode('phases')}
+                                                >
+                                                    🎯 Phases
+                                                </div>
+                                                <div 
+                                                    className={`spec-tab ${specViewMode === 'content' ? 'active' : ''}`}
+                                                    onClick={() => setSpecViewMode('content')}
+                                                >
+                                                    📖 Full
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {selectedSpec ? (
+                                        <div>
+                                            {specViewMode === 'summary' && (
+                                                <div>
+                                                    <div className="spec-meta">
+                                                        <span>📊 {selectedSpec.key_sections} sections</span>
+                                                        <span>📏 {(selectedSpec.size/1024).toFixed(1)}kb</span>
+                                                        <span>🎯 {selectedSpec.responsibilities?.length || 0} responsibilities</span>
+                                                    </div>
+                                                    
+                                                    <div style={{color: '#e2e8f0', marginBottom: '16px', lineHeight: '1.6'}}>
+                                                        {selectedSpec.summary}
+                                                    </div>
+                                                    
+                                                    {selectedSpec.responsibilities && selectedSpec.responsibilities.length > 0 && (
+                                                        <div className="responsibilities-list">
+                                                            <h4 style={{color: '#f59e0b', fontSize: '0.875rem', marginBottom: '8px'}}>Key Responsibilities:</h4>
+                                                            {selectedSpec.responsibilities.map((resp, idx) => (
+                                                                <div key={idx} className="responsibility-item">• {resp}</div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            
+                                            {specViewMode === 'phases' && selectedSpec.phases && (
+                                                <div className="spec-phases">
+                                                    <h4 style={{color: '#10b981', fontSize: '0.875rem', marginBottom: '12px'}}>Project Phases:</h4>
+                                                    {selectedSpec.phases.map((phase, idx) => (
+                                                        <div key={idx} className="phase-item">
+                                                            <div className="phase-title">{phase.title}</div>
+                                                            <div className="phase-details">{phase.details}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            
+                                            {specViewMode === 'content' && (
+                                                <div className="spec-content">
+                                                    {selectedSpec.content}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div style={{color: '#64748b', fontStyle: 'italic', padding: '20px', textAlign: 'center'}}>
+                                            Click on a spec file to review its contents and use it for task planning
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="tasks-section">
                         <div className="section-card">
@@ -607,6 +1164,73 @@
                     <button className="refresh-button" onClick={refreshData} title="Refresh Dashboard">
                         ↻
                     </button>
+                        </>
+                    ) : (
+                        <div className="cli-view">
+                            <div className="cli-header">🎯 Agent UM-7 Command Interface</div>
+                            
+                            <div className="cli-commands">
+                                <div className="cli-command">
+                                    <div className="cli-command-title">Submit Task</div>
+                                    <div className="cli-command-code">
+                                        {`curl -X POST http://localhost:8001/tasks -H "Content-Type: application/json" -d '{
+  "id": "my-task-id",
+  "title": "Task title",
+  "description": "Task description", 
+  "role": "backend",
+  "repository_url": "https://github.com/username/repo.git"
+}'`}
+                                    </div>
+                                </div>
+                                
+                                <div className="cli-command">
+                                    <div className="cli-command-title">List All Tasks</div>
+                                    <div className="cli-command-code">curl http://localhost:8001/tasks</div>
+                                </div>
+                                
+                                <div className="cli-command">
+                                    <div className="cli-command-title">Get Task Status</div>
+                                    <div className="cli-command-code">curl http://localhost:8001/tasks/TASK-ID</div>
+                                </div>
+                                
+                                <div className="cli-command">
+                                    <div className="cli-command-title">Get Metrics</div>
+                                    <div className="cli-command-code">curl http://localhost:8001/api/metrics</div>
+                                </div>
+                                
+                                <div className="cli-command">
+                                    <div className="cli-command-title">Agent Helper Functions</div>
+                                    <div className="cli-command-code">
+                                        {`# In Claude/Codex session:
+exec(open('/home/umwai/um-agent-orchestration/scripts/agent_helpers.py').read())
+submit("Fix bug", "Description", "backend")
+tasks()  # List tasks
+status("task-id")  # Get status`}
+                                    </div>
+                                </div>
+                                
+                                <div className="cli-command">
+                                    <div className="cli-command-title">Full Access Mode</div>
+                                    <div className="cli-command-code">
+                                        {`# Claude Code full access
+claude --dangerously-skip-permissions
+
+# Codex full access
+codex --ask-for-approval never --sandbox danger-full-access`}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style={{marginTop: '20px', padding: '12px', background: '#1e293b', borderRadius: '6px', fontSize: '0.875rem'}}>
+                                <div style={{color: '#10b981', marginBottom: '8px'}}>💡 Quick Start:</div>
+                                <div style={{color: '#94a3b8'}}>
+                                    1. Load agent helpers in any repo: <code style={{color: '#f59e0b'}}>exec(open('path/to/agent_helpers.py').read())</code><br/>
+                                    2. Submit tasks: <code style={{color: '#f59e0b'}}>submit("title", "description", "role")</code><br/>
+                                    3. Monitor: <code style={{color: '#f59e0b'}}>tasks()</code> and <code style={{color: '#f59e0b'}}>get_metrics()</code>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
