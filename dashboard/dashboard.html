@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoDev 24/7 Agent Orchestration Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            padding: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        
+        .metric-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .metric-label {
+            color: #64748b;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .tasks-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        
+        .section-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            color: #f1f5f9;
+        }
+        
+        .task-item {
+            background: #334155;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        
+        .task-item.queued { border-left-color: #f59e0b; }
+        .task-item.running { border-left-color: #3b82f6; }
+        .task-item.passed { border-left-color: #10b981; }
+        .task-item.failed { border-left-color: #ef4444; }
+        
+        .task-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
+        .task-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .status-queued { background: #f59e0b; color: #000; }
+        .status-running { background: #3b82f6; color: #fff; }
+        .status-passed { background: #10b981; color: #fff; }
+        .status-failed { background: #ef4444; color: #fff; }
+        
+        .task-meta {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        
+        .task-description {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
+        
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .agent-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .agent-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .agent-name {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        
+        .agent-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: auto;
+        }
+        
+        .status-online { background: #10b981; }
+        .status-offline { background: #6b7280; }
+        .status-busy { background: #f59e0b; }
+        
+        .provider-list {
+            list-style: none;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        
+        .provider-list li {
+            margin-bottom: 4px;
+        }
+        
+        .refresh-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .refresh-button:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+        }
+        
+        .submit-task {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            color: #f1f5f9;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: #f1f5f9;
+            font-size: 0.875rem;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .submit-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 12px 24px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .submit-button:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard-root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Mock data for demonstration - would be replaced with API calls
+        const mockMetrics = {
+            tasksEnqueued: 142,
+            tasksRunning: 3,
+            tasksPassed: 128,
+            tasksFailed: 11,
+            commitsMade: 89,
+            prsOpened: 23
+        };
+
+        const mockTasks = [
+            {
+                id: "task-1",
+                title: "Implement user authentication API",
+                description: "Add JWT-based authentication with role-based access control",
+                role: "backend",
+                status: "running",
+                branch: "feat/backend/auth-api",
+                createdAt: "2025-08-26T10:30:00Z"
+            },
+            {
+                id: "task-2", 
+                title: "Create React dashboard components",
+                description: "Build responsive dashboard with real-time updates",
+                role: "frontend",
+                status: "queued",
+                branch: "feat/frontend/dashboard",
+                createdAt: "2025-08-26T11:15:00Z"
+            },
+            {
+                id: "task-3",
+                title: "Optimize database queries",
+                description: "Add indexes and optimize slow queries in user analytics",
+                role: "data",
+                status: "passed",
+                branch: "feat/data/query-optimization", 
+                createdAt: "2025-08-26T09:45:00Z"
+            },
+            {
+                id: "task-4",
+                title: "Deploy ML model pipeline",
+                description: "Set up automated training and deployment for recommendation model",
+                role: "ml",
+                status: "failed",
+                branch: "feat/ml/recommendation-pipeline",
+                createdAt: "2025-08-26T08:20:00Z",
+                error: "Model validation failed - accuracy below threshold"
+            }
+        ];
+
+        const mockAgents = [
+            {
+                name: "Claude Interactive",
+                status: "busy",
+                provider: "claude_interactive",
+                currentTask: "task-1",
+                capabilities: ["Full Access", "Code Generation", "File Operations"]
+            },
+            {
+                name: "Codex CLI",
+                status: "online", 
+                provider: "codex_cli",
+                currentTask: null,
+                capabilities: ["Code Generation", "Testing", "Debugging"]
+            },
+            {
+                name: "Gemini CLI",
+                status: "online",
+                provider: "gemini_cli", 
+                currentTask: null,
+                capabilities: ["Analysis", "Documentation", "Optimization"]
+            },
+            {
+                name: "Backend Agent",
+                status: "busy",
+                provider: "anthropic_api",
+                currentTask: "task-1",
+                capabilities: ["FastAPI", "Database", "Testing"]
+            }
+        ];
+
+        function Dashboard() {
+            const [metrics, setMetrics] = useState(mockMetrics);
+            const [tasks, setTasks] = useState(mockTasks);
+            const [agents, setAgents] = useState(mockAgents);
+            const [newTask, setNewTask] = useState({
+                title: '',
+                description: '',
+                role: 'generic',
+                fullAccess: false
+            });
+
+            const handleSubmitTask = async (e) => {
+                e.preventDefault();
+                // Would normally send to API
+                const task = {
+                    id: `task-${Date.now()}`,
+                    ...newTask,
+                    status: 'queued',
+                    branch: `feat/${newTask.role}/${newTask.title.toLowerCase().replace(/\s+/g, '-')}`,
+                    createdAt: new Date().toISOString()
+                };
+                setTasks([...tasks, task]);
+                setNewTask({ title: '', description: '', role: 'generic', fullAccess: false });
+            };
+
+            const refreshData = () => {
+                // Would normally fetch from API
+                console.log('Refreshing dashboard data...');
+            };
+
+            const runningTasks = tasks.filter(t => t.status === 'running' || t.status === 'queued');
+            const completedTasks = tasks.filter(t => t.status === 'passed' || t.status === 'failed');
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>🤖 AutoDev Orchestrator</h1>
+                        <p>24/7 Autonomous Agent Monitoring Dashboard</p>
+                    </div>
+
+                    <div className="metrics-grid">
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.tasksEnqueued}</div>
+                            <div className="metric-label">Total Enqueued</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#3b82f6'}}>{metrics.tasksRunning}</div>
+                            <div className="metric-label">Currently Running</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#10b981'}}>{metrics.tasksPassed}</div>
+                            <div className="metric-label">Completed Successfully</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#ef4444'}}>{metrics.tasksFailed}</div>
+                            <div className="metric-label">Failed Tasks</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#8b5cf6'}}>{metrics.commitsMade}</div>
+                            <div className="metric-label">Auto Commits</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#06b6d4'}}>{metrics.prsOpened}</div>
+                            <div className="metric-label">PRs Opened</div>
+                        </div>
+                    </div>
+
+                    <div className="submit-task">
+                        <h2 className="section-title">Submit New Task</h2>
+                        <form onSubmit={handleSubmitTask}>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Task Title</label>
+                                    <input
+                                        type="text"
+                                        value={newTask.title}
+                                        onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                                        placeholder="Brief task description"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Agent Role</label>
+                                    <select
+                                        value={newTask.role}
+                                        onChange={(e) => setNewTask({...newTask, role: e.target.value})}
+                                    >
+                                        <option value="generic">Generic</option>
+                                        <option value="backend">Backend</option>
+                                        <option value="frontend">Frontend</option>
+                                        <option value="data">Data</option>
+                                        <option value="ml">ML</option>
+                                        <option value="computational_biologist">Computational Biologist</option>
+                                        <option value="fund_manager">Fund Manager</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Detailed Description</label>
+                                <textarea
+                                    value={newTask.description}
+                                    onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                                    placeholder="Detailed requirements and acceptance criteria"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        checked={newTask.fullAccess}
+                                        onChange={(e) => setNewTask({...newTask, fullAccess: e.target.checked})}
+                                        style={{marginRight: '8px'}}
+                                    />
+                                    Enable Full Access Mode (--dangerously-skip-permissions)
+                                </label>
+                            </div>
+                            <button type="submit" className="submit-button">
+                                🚀 Submit Task
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="tasks-section">
+                        <div className="section-card">
+                            <h2 className="section-title">Active Tasks ({runningTasks.length})</h2>
+                            {runningTasks.map(task => (
+                                <div key={task.id} className={`task-item ${task.status}`}>
+                                    <div className="task-header">
+                                        <div className="task-title">{task.title}</div>
+                                        <div className={`task-status status-${task.status}`}>
+                                            {task.status}
+                                        </div>
+                                    </div>
+                                    <div className="task-meta">
+                                        Role: {task.role} • Branch: {task.branch}
+                                    </div>
+                                    <div className="task-description">
+                                        {task.description}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="section-card">
+                            <h2 className="section-title">Recent Completed ({completedTasks.length})</h2>
+                            {completedTasks.slice(-5).map(task => (
+                                <div key={task.id} className={`task-item ${task.status}`}>
+                                    <div className="task-header">
+                                        <div className="task-title">{task.title}</div>
+                                        <div className={`task-status status-${task.status}`}>
+                                            {task.status}
+                                        </div>
+                                    </div>
+                                    <div className="task-meta">
+                                        Role: {task.role} • Branch: {task.branch}
+                                    </div>
+                                    <div className="task-description">
+                                        {task.description}
+                                    </div>
+                                    {task.error && (
+                                        <div style={{color: '#ef4444', fontSize: '0.75rem', marginTop: '8px'}}>
+                                            Error: {task.error}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="section-card">
+                        <h2 className="section-title">Agent Status ({agents.length} agents)</h2>
+                        <div className="agent-grid">
+                            {agents.map(agent => (
+                                <div key={agent.name} className="agent-card">
+                                    <div className="agent-header">
+                                        <div className="agent-name">{agent.name}</div>
+                                        <div className={`agent-status status-${agent.status}`}></div>
+                                    </div>
+                                    <div style={{fontSize: '0.875rem', color: '#94a3b8', marginBottom: '8px'}}>
+                                        Provider: {agent.provider}
+                                    </div>
+                                    {agent.currentTask && (
+                                        <div style={{fontSize: '0.875rem', color: '#3b82f6', marginBottom: '8px'}}>
+                                            Working on: {agent.currentTask}
+                                        </div>
+                                    )}
+                                    <ul className="provider-list">
+                                        {agent.capabilities.map(cap => (
+                                            <li key={cap}>• {cap}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button className="refresh-button" onClick={refreshData} title="Refresh Dashboard">
+                        ↻
+                    </button>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById('dashboard-root'));
+    </script>
+</body>
+</html>

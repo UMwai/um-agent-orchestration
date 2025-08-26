@@ -46,6 +46,24 @@ claude --dangerously-skip-permissions -p "Analyze this repository structure"
 codex --ask-for-approval never --sandbox danger-full-access exec "Review codebase architecture"
 ```
 
+**Agent Integration for Task Orchestration:**
+```bash
+# Launch Claude Code as orchestrating agent in this repo
+claude --dangerously-skip-permissions
+
+# Launch Codex as orchestrating agent in this repo  
+codex --ask-for-approval never --sandbox danger-full-access
+
+# In the agent session, load helper functions:
+exec(open('scripts/agent_helpers.py').read())
+
+# Submit tasks to the orchestration system:
+submit("Fix authentication bug", "Login returns 500 error", "backend")
+tasks()  # List all tasks
+status("task-id")  # Check specific task
+get_metrics()  # System metrics
+```
+
 ## Architecture Overview
 
 **AutoDev** is a multi-agent orchestration system with these key components:
