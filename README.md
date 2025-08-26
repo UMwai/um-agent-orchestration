@@ -42,7 +42,7 @@ A complete, production-grade autonomous multi-agent coding system that orchestra
 
 ```bash
 # Clone and setup
-git clone <repo-url>
+git clone https://github.com/UMwai/um-agent-orchestration.git
 cd um-agent-orchestration
 
 # Configure environment
@@ -66,7 +66,7 @@ make monitoring
 ### 3. Submit Your First Task
 
 ```bash
-# Submit a task using example spec
+# Submit a task using example spec  
 curl -X POST http://localhost:8000/tasks \
   -H 'Content-Type: application/json' \
   -d @specs/fm_example.yaml
@@ -894,8 +894,9 @@ curl http://localhost:8000/tasks
 # Redis connectivity
 redis-cli ping
 
-# Provider availability
-make test-providers  # TODO: implement
+# Test individual providers
+claude -p "test"
+codex exec "test"
 ```
 
 ### Performance Tuning

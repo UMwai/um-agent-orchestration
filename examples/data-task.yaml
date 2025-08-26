@@ -1,0 +1,16 @@
+id: WEBAPP-DATA-001
+title: "Todo Analytics Pipeline"
+description: |
+  Build data pipeline for todo app analytics:
+  - ETL pipeline to extract todo completion metrics
+  - Data warehouse schema for user behavior analysis
+  - Daily/weekly reporting dashboards
+  - User engagement scoring algorithm
+role: data
+acceptance:
+  tests:
+    - "tests/data/test_etl_pipeline.py"
+    - "tests/data/test_analytics.py"
+  lint: true
+  typecheck: true
+target_dir: "analytics"

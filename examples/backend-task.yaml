@@ -1,0 +1,20 @@
+id: WEBAPP-BACKEND-001
+title: "Build FastAPI Todo Backend"
+description: |
+  Create a FastAPI backend for a todo application with:
+  - SQLAlchemy models for Todo items
+  - CRUD endpoints: GET/POST/PUT/DELETE /todos
+  - PostgreSQL database integration
+  - Pydantic schemas for validation
+  - Authentication middleware
+  - Comprehensive test coverage
+role: backend
+full_access: true  # Backend often needs system access for DB setup
+provider_override: "codex_interactive"  # Use Codex for backend development
+acceptance:
+  tests:
+    - "tests/backend/test_todo_api.py"
+    - "tests/backend/test_auth.py"
+  lint: true
+  typecheck: true
+target_dir: "backend"

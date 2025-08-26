@@ -210,7 +210,7 @@ curl -X POST http://localhost:8000/tasks \
   -H "Content-Type: application/json" \
   -d @examples/backend-task.yaml
 
-# Submit data pipeline task
+# Submit data pipeline task  
 curl -X POST http://localhost:8000/tasks \
   -H "Content-Type: application/json" \
   -d @examples/data-task.yaml

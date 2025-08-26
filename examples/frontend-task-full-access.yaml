@@ -1,0 +1,20 @@
+id: WEBAPP-FRONTEND-002
+title: "Build Advanced React Todo App with Full Stack Integration"
+description: |
+  Create a comprehensive React TypeScript frontend with full development autonomy:
+  - Complete project scaffolding with Vite/Next.js
+  - Advanced state management with Zustand or Redux Toolkit
+  - E2E testing with Playwright
+  - Automated deployment configuration
+  - Performance optimization and bundling
+  - Full CI/CD pipeline setup
+role: frontend
+full_access: true  # Enable full access for complex setup
+provider_override: "claude_interactive"  # Force Claude with full permissions
+acceptance:
+  tests:
+    - "tests/frontend/**/*.test.tsx"
+    - "tests/e2e/**/*.spec.ts"
+  lint: true
+  typecheck: true
+target_dir: "frontend"

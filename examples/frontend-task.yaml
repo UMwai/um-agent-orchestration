@@ -1,0 +1,18 @@
+id: WEBAPP-FRONTEND-001
+title: "Build React Todo App Frontend"
+description: |
+  Create a modern React TypeScript frontend for a todo application with:
+  - Todo list component with add/edit/delete functionality
+  - Responsive design using Tailwind CSS or similar
+  - State management with React hooks or Redux Toolkit
+  - API integration for CRUD operations
+  - Unit tests with React Testing Library
+role: frontend
+full_access: false  # Standard mode - safe for UI development
+acceptance:
+  tests:
+    - "tests/frontend/test_todo_components.test.tsx"
+    - "tests/frontend/test_app_integration.test.tsx"
+  lint: true
+  typecheck: true
+target_dir: "frontend"
