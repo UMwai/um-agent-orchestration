@@ -1,11 +1,14 @@
 from __future__ import annotations
+
 import subprocess
 from dataclasses import dataclass
-from orchestrator.settings import Settings
-from orchestrator.models import TaskSpec
-from providers import router
+
+from gitops import branch_manager
 from monitoring.metrics import METRICS
-from gitops import branch_manager, utils
+from orchestrator.models import TaskSpec
+from orchestrator.settings import Settings
+from providers import router
+
 
 @dataclass
 class Agent:
@@ -14,8 +17,23 @@ class Agent:
     feature_branch: str
     spec: TaskSpec
 
-    def _llm(self, prompt: str) -> str:
-        return router.call_models(prompt, cwd=self.workdir)
+    def _llm(self, prompt: str) -> tuple[str, str, str]:
+        """
+        Call LLM with configured provider/model preferences.
+        Returns: (response, used_provider, used_model)
+        """
+        return router.call_models(
+            prompt,
+            cwd=self.workdir,
+            full_access=self.spec.full_access,
+            provider_override=self.spec.provider_override,
+            model_override=self.spec.model,
+        )
+
+    def _llm_response(self, prompt: str) -> str:
+        """Legacy method that returns only the response"""
+        response, _, _ = self._llm(prompt)
+        return response
 
     def _run_cmd(self, cmd: list[str]) -> None:
         print(f"[RUN] {' '.join(cmd)}")
@@ -23,8 +41,15 @@ class Agent:
         if proc.returncode != 0:
             raise RuntimeError(f"Command failed: {' '.join(cmd)}")
 
-    def plan_and_execute(self) -> None:
+    def plan_and_execute(self) -> dict:
         # Optionally overridden in derived classes; GenericAgent implements feedback loop
         branch_manager.rebase_onto_dev(self.feature_branch)
         # No-op here; GenericAgent is used for dynamic roles
         METRICS.commits_made.inc()
+
+        # Return basic metadata - subclasses should override
+        return {
+            "provider": self.spec.provider_override or "default",
+            "model": self.spec.model or "default",
+            "completed": True,
+        }

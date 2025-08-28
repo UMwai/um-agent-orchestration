@@ -1,0 +1,773 @@
+"""
+Unit Tests for CLI Persistence Module
+
+Comprehensive tests for the CLI persistence system including:
+- Session state persistence
+- Message storage and retrieval
+- Command history management  
+- Redis integration
+- Recovery and failover scenarios
+"""
+
+import json
+import pytest
+import redis
+import time
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch, AsyncMock
+
+from orchestrator.persistence import (
+    PersistenceManager,
+    RedisBackend,
+    InMemoryBackend,
+    get_persistence_manager
+)
+from orchestrator.persistence_models import (
+    PersistedSession,
+    PersistedMessage,
+    SessionState,
+    MessageType,
+    MessageDirection
+)
+
+
+class TestPersistedSession:
+    """Test PersistedSession model."""
+    
+    def test_session_creation(self):
+        """Test creating persisted session."""
+        session = PersistedSession(
+            id="test-session-123",
+            provider="claude",
+            user_id="test_user",
+            created_at=datetime.utcnow(),
+            last_activity=datetime.utcnow(),
+            state=SessionState.ACTIVE,
+            working_directory="/tmp/test",
+            metadata={"mode": "interactive", "full_access": True}
+        )
+        
+        assert session.id == "test-session-123"
+        assert session.provider == "claude"
+        assert session.user_id == "test_user"
+        assert session.state == SessionState.ACTIVE
+        assert session.working_directory == "/tmp/test"
+        assert session.metadata["mode"] == "interactive"
+        assert session.metadata["full_access"] is True
+    
+    def test_session_serialization(self):
+        """Test session serialization to/from JSON."""
+        session = PersistedSession(
+            id="test-session",
+            provider="codex",
+            user_id="user1",
+            state=SessionState.RUNNING,
+            metadata={"key": "value"}
+        )
+        
+        # Serialize to dict
+        session_dict = session.to_dict()
+        assert session_dict["id"] == "test-session"
+        assert session_dict["provider"] == "codex"
+        assert session_dict["state"] == "running"
+        
+        # Deserialize from dict
+        restored = PersistedSession.from_dict(session_dict)
+        assert restored.id == session.id
+        assert restored.provider == session.provider
+        assert restored.state == session.state
+        assert restored.metadata == session.metadata
+    
+    def test_session_state_transitions(self):
+        """Test session state transitions."""
+        session = PersistedSession(
+            id="test",
+            provider="claude",
+            state=SessionState.INITIALIZING
+        )
+        
+        # Valid transitions
+        valid_transitions = [
+            (SessionState.INITIALIZING, SessionState.ACTIVE),
+            (SessionState.ACTIVE, SessionState.RUNNING),
+            (SessionState.RUNNING, SessionState.IDLE),
+            (SessionState.IDLE, SessionState.RUNNING),
+            (SessionState.RUNNING, SessionState.TERMINATED),
+            (SessionState.ACTIVE, SessionState.ERROR)
+        ]
+        
+        for from_state, to_state in valid_transitions:
+            session.state = from_state
+            assert session.can_transition_to(to_state) is True
+            session.state = to_state  # Transition should succeed
+    
+    def test_session_update_activity(self):
+        """Test updating session activity timestamp."""
+        session = PersistedSession(id="test", provider="claude")
+        
+        original_time = session.last_activity
+        time.sleep(0.01)  # Small delay
+        
+        session.update_activity()
+        assert session.last_activity > original_time
+
+
+class TestPersistedMessage:
+    """Test PersistedMessage model."""
+    
+    def test_message_creation(self):
+        """Test creating persisted message."""
+        message = PersistedMessage(
+            session_id="session-123",
+            content="test command",
+            type=MessageType.COMMAND,
+            direction=MessageDirection.INPUT,
+            timestamp=datetime.utcnow(),
+            metadata={"user": "test"}
+        )
+        
+        assert message.session_id == "session-123"
+        assert message.content == "test command"
+        assert message.type == MessageType.COMMAND
+        assert message.direction == MessageDirection.INPUT
+        assert message.metadata["user"] == "test"
+    
+    def test_message_serialization(self):
+        """Test message serialization."""
+        message = PersistedMessage(
+            session_id="test",
+            content="hello world",
+            type=MessageType.OUTPUT
+        )
+        
+        # Serialize
+        message_dict = message.to_dict()
+        assert message_dict["content"] == "hello world"
+        assert message_dict["type"] == "output"
+        
+        # Deserialize
+        restored = PersistedMessage.from_dict(message_dict)
+        assert restored.content == message.content
+        assert restored.type == message.type
+    
+    def test_message_types(self):
+        """Test different message types."""
+        types = [
+            (MessageType.COMMAND, "ls -la"),
+            (MessageType.OUTPUT, "file1.txt\nfile2.txt"),
+            (MessageType.ERROR, "Command not found"),
+            (MessageType.SYSTEM, "Session started"),
+            (MessageType.AUTH, "Enter password")
+        ]
+        
+        for msg_type, content in types:
+            message = PersistedMessage(
+                session_id="test",
+                content=content,
+                type=msg_type
+            )
+            assert message.type == msg_type
+            assert message.content == content
+
+
+class TestInMemoryBackend:
+    """Test in-memory persistence backend."""
+    
+    @pytest.fixture
+    def backend(self):
+        """Create in-memory backend."""
+        return InMemoryBackend()
+    
+    def test_backend_initialization(self, backend):
+        """Test backend initialization."""
+        assert len(backend.sessions) == 0
+        assert len(backend.messages) == 0
+    
+    def test_save_and_get_session(self, backend):
+        """Test saving and retrieving session."""
+        session = PersistedSession(
+            id="test-session",
+            provider="claude",
+            user_id="user1"
+        )
+        
+        # Save session
+        backend.save_session(session)
+        assert "test-session" in backend.sessions
+        
+        # Get session
+        retrieved = backend.get_session("test-session")
+        assert retrieved is not None
+        assert retrieved.id == "test-session"
+        assert retrieved.provider == "claude"
+    
+    def test_get_nonexistent_session(self, backend):
+        """Test getting non-existent session."""
+        session = backend.get_session("nonexistent")
+        assert session is None
+    
+    def test_update_session(self, backend):
+        """Test updating existing session."""
+        session = PersistedSession(id="test", provider="claude")
+        backend.save_session(session)
+        
+        # Update session
+        session.state = SessionState.RUNNING
+        session.metadata["updated"] = True
+        backend.save_session(session)
+        
+        # Verify update
+        retrieved = backend.get_session("test")
+        assert retrieved.state == SessionState.RUNNING
+        assert retrieved.metadata["updated"] is True
+    
+    def test_delete_session(self, backend):
+        """Test deleting session."""
+        session = PersistedSession(id="test", provider="claude")
+        backend.save_session(session)
+        
+        # Delete session
+        result = backend.delete_session("test")
+        assert result is True
+        assert "test" not in backend.sessions
+        
+        # Try to delete again
+        result = backend.delete_session("test")
+        assert result is False
+    
+    def test_list_sessions(self, backend):
+        """Test listing all sessions."""
+        # Add multiple sessions
+        for i in range(5):
+            session = PersistedSession(
+                id=f"session-{i}",
+                provider="claude",
+                user_id=f"user-{i % 2}"  # Two different users
+            )
+            backend.save_session(session)
+        
+        # List all sessions
+        sessions = backend.list_sessions()
+        assert len(sessions) == 5
+        
+        # Filter by user
+        user0_sessions = backend.list_sessions(user_id="user-0")
+        assert len(user0_sessions) == 3  # sessions 0, 2, 4
+        
+        user1_sessions = backend.list_sessions(user_id="user-1")
+        assert len(user1_sessions) == 2  # sessions 1, 3
+    
+    def test_save_and_get_message(self, backend):
+        """Test saving and retrieving messages."""
+        message = PersistedMessage(
+            session_id="test-session",
+            content="test message",
+            type=MessageType.COMMAND
+        )
+        
+        # Save message
+        backend.save_message(message)
+        assert len(backend.messages["test-session"]) == 1
+        
+        # Get messages
+        messages = backend.get_messages("test-session")
+        assert len(messages) == 1
+        assert messages[0].content == "test message"
+    
+    def test_get_messages_with_limit(self, backend):
+        """Test getting messages with limit."""
+        # Add 10 messages
+        for i in range(10):
+            message = PersistedMessage(
+                session_id="test",
+                content=f"message-{i}",
+                type=MessageType.OUTPUT
+            )
+            backend.save_message(message)
+        
+        # Get limited messages
+        messages = backend.get_messages("test", limit=5)
+        assert len(messages) == 5
+        
+        # Should return most recent messages
+        assert messages[0].content == "message-9"
+        assert messages[4].content == "message-5"
+    
+    def test_get_messages_by_type(self, backend):
+        """Test filtering messages by type."""
+        # Add messages of different types
+        types = [
+            MessageType.COMMAND,
+            MessageType.OUTPUT,
+            MessageType.ERROR,
+            MessageType.COMMAND,
+            MessageType.OUTPUT
+        ]
+        
+        for i, msg_type in enumerate(types):
+            message = PersistedMessage(
+                session_id="test",
+                content=f"message-{i}",
+                type=msg_type
+            )
+            backend.save_message(message)
+        
+        # Filter by type
+        commands = backend.get_messages("test", message_type=MessageType.COMMAND)
+        assert len(commands) == 2
+        
+        outputs = backend.get_messages("test", message_type=MessageType.OUTPUT)
+        assert len(outputs) == 2
+        
+        errors = backend.get_messages("test", message_type=MessageType.ERROR)
+        assert len(errors) == 1
+    
+    def test_delete_session_messages(self, backend):
+        """Test deleting all messages for a session."""
+        # Add messages
+        for i in range(5):
+            message = PersistedMessage(
+                session_id="test",
+                content=f"message-{i}",
+                type=MessageType.OUTPUT
+            )
+            backend.save_message(message)
+        
+        assert len(backend.get_messages("test")) == 5
+        
+        # Delete messages
+        result = backend.delete_session_messages("test")
+        assert result is True
+        assert len(backend.get_messages("test")) == 0
+    
+    def test_cleanup_expired_sessions(self, backend):
+        """Test cleaning up expired sessions."""
+        # Add sessions with different last activity times
+        now = datetime.utcnow()
+        
+        # Active session (recent activity)
+        active_session = PersistedSession(
+            id="active",
+            provider="claude",
+            last_activity=now - timedelta(minutes=30)
+        )
+        backend.save_session(active_session)
+        
+        # Expired sessions (old activity)
+        for i in range(3):
+            expired_session = PersistedSession(
+                id=f"expired-{i}",
+                provider="claude",
+                last_activity=now - timedelta(hours=25 + i)
+            )
+            backend.save_session(expired_session)
+        
+        # Cleanup sessions older than 24 hours
+        cleaned = backend.cleanup_expired_sessions(max_age_hours=24)
+        assert cleaned == 3
+        
+        # Active session should remain
+        assert backend.get_session("active") is not None
+        
+        # Expired sessions should be gone
+        for i in range(3):
+            assert backend.get_session(f"expired-{i}") is None
+
+
+class TestRedisBackend:
+    """Test Redis persistence backend."""
+    
+    @pytest.fixture
+    def mock_redis(self):
+        """Create mock Redis client."""
+        return MagicMock(spec=redis.Redis)
+    
+    @pytest.fixture
+    def backend(self, mock_redis):
+        """Create Redis backend with mock client."""
+        backend = RedisBackend(host="localhost", port=6379)
+        backend.client = mock_redis
+        return backend
+    
+    def test_redis_key_generation(self, backend):
+        """Test Redis key generation."""
+        session_key = backend._session_key("test-session")
+        assert session_key == "cli:session:test-session"
+        
+        message_key = backend._message_key("test-session")
+        assert message_key == "cli:messages:test-session"
+        
+        user_key = backend._user_sessions_key("test-user")
+        assert user_key == "cli:user:test-user:sessions"
+    
+    def test_save_session_redis(self, backend, mock_redis):
+        """Test saving session to Redis."""
+        session = PersistedSession(
+            id="test-session",
+            provider="claude",
+            user_id="user1"
+        )
+        
+        backend.save_session(session)
+        
+        # Verify Redis calls
+        mock_redis.set.assert_called_once()
+        call_args = mock_redis.set.call_args
+        
+        key = call_args[0][0]
+        assert key == "cli:session:test-session"
+        
+        # Verify TTL set
+        assert call_args[1]["ex"] == 86400  # 24 hours default
+        
+        # Verify user session tracking
+        mock_redis.sadd.assert_called_once_with(
+            "cli:user:user1:sessions",
+            "test-session"
+        )
+    
+    def test_get_session_redis(self, backend, mock_redis):
+        """Test getting session from Redis."""
+        # Mock Redis response
+        session_data = {
+            "id": "test-session",
+            "provider": "claude",
+            "user_id": "user1",
+            "state": "active",
+            "created_at": datetime.utcnow().isoformat(),
+            "last_activity": datetime.utcnow().isoformat()
+        }
+        mock_redis.get.return_value = json.dumps(session_data).encode()
+        
+        session = backend.get_session("test-session")
+        
+        assert session is not None
+        assert session.id == "test-session"
+        assert session.provider == "claude"
+        
+        mock_redis.get.assert_called_once_with("cli:session:test-session")
+    
+    def test_get_nonexistent_session_redis(self, backend, mock_redis):
+        """Test getting non-existent session from Redis."""
+        mock_redis.get.return_value = None
+        
+        session = backend.get_session("nonexistent")
+        assert session is None
+    
+    def test_delete_session_redis(self, backend, mock_redis):
+        """Test deleting session from Redis."""
+        # Mock getting session first
+        session_data = {"id": "test", "user_id": "user1"}
+        mock_redis.get.return_value = json.dumps(session_data).encode()
+        mock_redis.delete.return_value = 1
+        
+        result = backend.delete_session("test")
+        assert result is True
+        
+        # Verify deletion calls
+        mock_redis.delete.assert_any_call("cli:session:test")
+        mock_redis.delete.assert_any_call("cli:messages:test")
+        mock_redis.srem.assert_called_once_with("cli:user:user1:sessions", "test")
+    
+    def test_save_message_redis(self, backend, mock_redis):
+        """Test saving message to Redis."""
+        message = PersistedMessage(
+            session_id="test-session",
+            content="test message",
+            type=MessageType.COMMAND
+        )
+        
+        backend.save_message(message)
+        
+        # Verify Redis list push
+        mock_redis.lpush.assert_called_once()
+        call_args = mock_redis.lpush.call_args
+        
+        key = call_args[0][0]
+        assert key == "cli:messages:test-session"
+        
+        # Verify list trimming (keep last 1000 messages)
+        mock_redis.ltrim.assert_called_once_with(
+            "cli:messages:test-session", 0, 999
+        )
+    
+    def test_get_messages_redis(self, backend, mock_redis):
+        """Test getting messages from Redis."""
+        # Mock Redis response
+        message_data = [
+            json.dumps({
+                "session_id": "test",
+                "content": "message 1",
+                "type": "command",
+                "direction": "input",
+                "timestamp": datetime.utcnow().isoformat()
+            }).encode(),
+            json.dumps({
+                "session_id": "test",
+                "content": "message 2",
+                "type": "output",
+                "direction": "output",
+                "timestamp": datetime.utcnow().isoformat()
+            }).encode()
+        ]
+        mock_redis.lrange.return_value = message_data
+        
+        messages = backend.get_messages("test", limit=10)
+        
+        assert len(messages) == 2
+        assert messages[0].content == "message 1"
+        assert messages[1].content == "message 2"
+        
+        mock_redis.lrange.assert_called_once_with(
+            "cli:messages:test", 0, 9
+        )
+    
+    def test_list_sessions_redis(self, backend, mock_redis):
+        """Test listing sessions from Redis."""
+        # Mock Redis scan
+        mock_redis.scan_iter.return_value = [
+            b"cli:session:session1",
+            b"cli:session:session2"
+        ]
+        
+        # Mock session data
+        session_data = {
+            "id": "session1",
+            "provider": "claude",
+            "user_id": "user1",
+            "state": "active"
+        }
+        mock_redis.get.return_value = json.dumps(session_data).encode()
+        
+        sessions = backend.list_sessions()
+        
+        assert len(sessions) > 0
+        mock_redis.scan_iter.assert_called_once_with("cli:session:*")
+
+
+class TestPersistenceManager:
+    """Test PersistenceManager high-level interface."""
+    
+    @pytest.fixture
+    def manager(self):
+        """Create persistence manager with in-memory backend."""
+        manager = PersistenceManager()
+        manager.backend = InMemoryBackend()
+        return manager
+    
+    def test_manager_initialization(self, manager):
+        """Test manager initialization."""
+        assert manager.backend is not None
+        assert isinstance(manager.backend, InMemoryBackend)
+    
+    @pytest.mark.asyncio
+    async def test_create_session(self, manager):
+        """Test creating new session."""
+        session = await manager.create_session(
+            provider="claude",
+            user_id="test_user",
+            working_directory="/tmp",
+            metadata={"key": "value"}
+        )
+        
+        assert session is not None
+        assert session.provider == "claude"
+        assert session.user_id == "test_user"
+        assert session.working_directory == "/tmp"
+        assert session.metadata["key"] == "value"
+        assert session.state == SessionState.INITIALIZING
+    
+    @pytest.mark.asyncio
+    async def test_update_session_state(self, manager):
+        """Test updating session state."""
+        session = await manager.create_session("claude", "user1")
+        
+        # Update state
+        updated = await manager.update_session_state(
+            session.id,
+            SessionState.RUNNING
+        )
+        
+        assert updated is True
+        
+        # Verify update
+        retrieved = await manager.get_session(session.id)
+        assert retrieved.state == SessionState.RUNNING
+    
+    @pytest.mark.asyncio
+    async def test_add_message(self, manager):
+        """Test adding message to session."""
+        session = await manager.create_session("claude", "user1")
+        
+        message = PersistedMessage(
+            session_id=session.id,
+            content="test command",
+            type=MessageType.COMMAND
+        )
+        
+        await manager.add_message(session.id, message)
+        
+        # Verify message saved
+        messages = await manager.get_session_history(session.id)
+        assert len(messages) == 1
+        assert messages[0].content == "test command"
+    
+    @pytest.mark.asyncio
+    async def test_terminate_session(self, manager):
+        """Test terminating session."""
+        session = await manager.create_session("claude", "user1")
+        
+        # Add some messages
+        for i in range(3):
+            message = PersistedMessage(
+                session_id=session.id,
+                content=f"message-{i}",
+                type=MessageType.OUTPUT
+            )
+            await manager.add_message(session.id, message)
+        
+        # Terminate session
+        result = await manager.terminate_session(
+            session.id,
+            reason="User requested"
+        )
+        assert result is True
+        
+        # Session should be marked as terminated
+        terminated = await manager.get_session(session.id)
+        assert terminated.state == SessionState.TERMINATED
+        assert terminated.metadata.get("termination_reason") == "User requested"
+    
+    @pytest.mark.asyncio
+    async def test_recover_sessions(self, manager):
+        """Test recovering sessions after restart."""
+        # Create some sessions
+        session_ids = []
+        for i in range(3):
+            session = await manager.create_session(
+                provider=f"provider-{i}",
+                user_id="user1"
+            )
+            session_ids.append(session.id)
+            
+            # Mark as running
+            await manager.update_session_state(session.id, SessionState.RUNNING)
+        
+        # Simulate restart - create new manager with same backend
+        new_manager = PersistenceManager()
+        new_manager.backend = manager.backend
+        
+        # Recover sessions
+        recovered = await new_manager.recover_sessions()
+        
+        assert len(recovered) == 3
+        for session in recovered:
+            assert session.id in session_ids
+            assert session.state == SessionState.ERROR  # Should be marked as error after recovery
+    
+    @pytest.mark.asyncio
+    async def test_cleanup_expired_sessions(self, manager):
+        """Test cleaning up expired sessions."""
+        # Create sessions with different ages
+        now = datetime.utcnow()
+        
+        # Recent session
+        recent = await manager.create_session("claude", "user1")
+        
+        # Old session (manually set old timestamp)
+        old = await manager.create_session("claude", "user2")
+        old.last_activity = now - timedelta(hours=25)
+        manager.backend.save_session(old)
+        
+        # Cleanup
+        cleaned = await manager.cleanup_expired_sessions(max_age_hours=24)
+        assert cleaned == 1
+        
+        # Recent session should exist
+        assert await manager.get_session(recent.id) is not None
+        
+        # Old session should be gone
+        assert await manager.get_session(old.id) is None
+    
+    @pytest.mark.asyncio
+    async def test_get_active_sessions(self, manager):
+        """Test getting active sessions."""
+        # Create sessions in different states
+        states = [
+            SessionState.INITIALIZING,
+            SessionState.ACTIVE,
+            SessionState.RUNNING,
+            SessionState.IDLE,
+            SessionState.TERMINATED,
+            SessionState.ERROR
+        ]
+        
+        session_ids = []
+        for state in states:
+            session = await manager.create_session("claude", "user1")
+            await manager.update_session_state(session.id, state)
+            session_ids.append(session.id)
+        
+        # Get active sessions
+        active = await manager.get_active_sessions()
+        
+        # Should include ACTIVE, RUNNING, and IDLE states
+        assert len(active) == 3
+        active_states = {s.state for s in active}
+        assert SessionState.ACTIVE in active_states
+        assert SessionState.RUNNING in active_states
+        assert SessionState.IDLE in active_states
+    
+    @pytest.mark.asyncio
+    async def test_get_session_metrics(self, manager):
+        """Test getting persistence metrics."""
+        # Create test data
+        for i in range(5):
+            session = await manager.create_session(
+                provider="claude" if i % 2 == 0 else "codex",
+                user_id=f"user-{i % 3}"
+            )
+            
+            # Add messages
+            for j in range(3):
+                message = PersistedMessage(
+                    session_id=session.id,
+                    content=f"message-{j}",
+                    type=MessageType.COMMAND if j == 0 else MessageType.OUTPUT
+                )
+                await manager.add_message(session.id, message)
+        
+        metrics = await manager.get_session_metrics()
+        
+        assert metrics["total_sessions"] == 5
+        assert metrics["total_messages"] == 15
+        assert metrics["sessions_by_provider"]["claude"] == 3
+        assert metrics["sessions_by_provider"]["codex"] == 2
+        assert metrics["unique_users"] == 3
+
+
+class TestSingletonPersistenceManager:
+    """Test singleton persistence manager."""
+    
+    def test_get_persistence_manager_singleton(self):
+        """Test singleton pattern."""
+        manager1 = get_persistence_manager()
+        manager2 = get_persistence_manager()
+        
+        assert manager1 is manager2
+        assert isinstance(manager1, PersistenceManager)
+    
+    def test_singleton_state_preservation(self):
+        """Test singleton preserves state."""
+        manager1 = get_persistence_manager()
+        
+        # Modify state
+        manager1.test_value = "test"
+        
+        manager2 = get_persistence_manager()
+        assert hasattr(manager2, "test_value")
+        assert manager2.test_value == "test"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

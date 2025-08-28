@@ -1,0 +1,489 @@
+# CLI Integration Technical Specification
+# Detailed technical requirements for implementation
+
+system:
+  name: "CLI Integration System"
+  version: "1.0.0"
+  description: "Real-time CLI tool integration for AutoDev dashboard"
+
+components:
+  backend:
+    process_manager:
+      class_name: "CLIProcessManager"
+      location: "orchestrator/cli_manager.py"
+      responsibilities:
+        - "Spawn and manage CLI processes"
+        - "Handle process lifecycle"
+        - "Stream output from processes"
+        - "Manage process pool"
+      
+      methods:
+        spawn_process:
+          description: "Create new CLI process (returns process_id)"
+          parameters:
+            provider:
+              type: "str"
+              values: ["claude", "codex", "gemini", "cursor", "bash"]
+            session_id:
+              type: "str"
+              format: "UUID"
+            working_dir:
+              type: "str"
+              validation: "must_exist"
+            env_vars:
+              type: "Dict[str, str]"
+              optional: true
+          returns:
+            type: "string"
+            attributes:
+              - "process_id: string"
+          exceptions:
+            - "ProcessSpawnError"
+            - "InvalidProviderError"
+            - "ResourceLimitError"
+        
+        send_command:
+          description: "Send command to CLI process"
+          parameters:
+            process_id:
+              type: "int"
+            command:
+              type: "str"
+              max_length: 10000
+            timeout:
+              type: "float"
+              default: 30.0
+          returns:
+            type: "AsyncIterator[str]"
+          exceptions:
+            - "ProcessNotFoundError"
+            - "CommandTimeoutError"
+            - "ProcessDeadError"
+        
+        terminate_process:
+          description: "Gracefully terminate CLI process"
+          parameters:
+            process_id:
+              type: "int"
+            force:
+              type: "bool"
+              default: false
+          returns:
+            type: "bool"
+          exceptions:
+            - "ProcessNotFoundError"
+            - "TerminationFailedError"
+      
+      configuration:
+        max_processes: 20
+        idle_timeout_seconds: 300
+        health_check_interval: 30
+        process_start_timeout: 5
+        default_memory_limit_mb: 512
+        default_cpu_limit_percent: 50
+
+    websocket_handler:
+      class_name: "CLIWebSocketHandler"
+      location: "orchestrator/cli_websocket.py"
+      responsibilities:
+        - "Handle WebSocket connections"
+        - "Route messages to appropriate handlers"
+        - "Stream output to clients"
+        - "Manage connection lifecycle"
+      
+      endpoints:
+        "/ws/cli/{session_id}":
+          description: "WebSocket endpoint for CLI interaction"
+          authentication: "JWT token in query param or header"
+          protocols:
+            - "ws"
+            - "wss"
+      
+      message_schema:
+        incoming:
+          type: "object"
+          required: ["type", "data"]
+          properties:
+            type:
+              enum: ["command", "cancel", "status", "ping"]
+            data:
+              type: "object"
+              properties:
+                command:
+                  type: "string"
+                provider:
+                  type: "string"
+                model:
+                  type: "string"
+                options:
+                  type: "object"
+        
+        outgoing:
+          type: "object"
+          required: ["type", "timestamp"]
+          properties:
+            type:
+              enum: ["output", "status", "error", "pong"]
+            data:
+              type: "object"
+            timestamp:
+              type: "string"
+              format: "ISO8601"
+            session_id:
+              type: "string"
+
+    session_manager:
+      class_name: "CLISessionManager"
+      location: "orchestrator/cli_session.py"
+      responsibilities:
+        - "Create and manage sessions"
+        - "Persist session state"
+        - "Handle session recovery"
+        - "Track session metrics"
+      
+      storage:
+        backend: "Redis"
+        key_prefix: "cli_session:"
+        ttl_seconds: 3600
+        
+      session_model:
+        fields:
+          - "id: str"
+          - "provider: str"
+          - "process_id: Optional[int]"
+          - "user_id: str"
+          - "created_at: datetime"
+          - "last_activity: datetime"
+          - "status: SessionStatus"
+          - "history: List[Message]"
+          - "metadata: Dict[str, Any]"
+        
+        status_enum:
+          - "INITIALIZING"
+          - "READY"
+          - "PROCESSING"
+          - "IDLE"
+          - "ERROR"
+          - "TERMINATED"
+
+  frontend:
+    terminal_component:
+      name: "CLITerminal"
+      location: "dashboard/components/CLITerminal.tsx"
+      status: "planned"  # Current implementation uses a single-page React UMD app
+      current_location: "dashboard/dashboard.html"
+      dependencies:
+        - "xterm.js: ^5.0.0"
+        - "xterm-addon-fit: ^0.8.0"
+        - "xterm-addon-weblinks: ^0.9.0"
+      
+      props:
+        sessionId:
+          type: "string"
+          required: true
+        provider:
+          type: "string"
+          required: true
+        onCommand:
+          type: "(command: string) => void"
+          required: true
+        options:
+          type: "object"
+          properties:
+            fontSize:
+              type: "number"
+              default: 14
+            theme:
+              type: "string"
+              default: "dark"
+            scrollback:
+              type: "number"
+              default: 10000
+      
+      features:
+        - "ANSI color support"
+        - "Copy/paste functionality"
+        - "Command history (up/down arrows)"
+        - "Ctrl+C interrupt support"
+        - "Window resize handling"
+        - "Link detection and clicking"
+
+    websocket_client:
+      name: "CLIWebSocketClient"
+      location: "dashboard/services/CLIWebSocketClient.ts"
+      
+      methods:
+        connect:
+          parameters:
+            - "url: string"
+            - "options?: ConnectionOptions"
+          returns: "Promise<void>"
+        
+        send:
+          parameters:
+            - "message: CLIMessage"
+          returns: "void"
+        
+        subscribe:
+          parameters:
+            - "handler: (message: CLIResponse) => void"
+          returns: "() => void"  # Unsubscribe function
+        
+        disconnect:
+          parameters: []
+          returns: "void"
+      
+      features:
+        - "Automatic reconnection with exponential backoff"
+        - "Message queuing during disconnection"
+        - "Heartbeat/ping mechanism"
+        - "Connection state management"
+        - "Error recovery"
+
+    provider_selector:
+      name: "ProviderSelector"
+      location: "dashboard/components/ProviderSelector.tsx"
+      
+      features:
+        - "List available providers with status"
+        - "Model selection per provider"
+        - "Full-access mode toggle"
+        - "Provider capabilities display"
+        - "Quick switch between providers"
+
+protocols:
+  cli_spawning:
+    claude:
+      binary: "claude"
+      interactive_args:
+        - "--dangerously-skip-permissions"
+      non_interactive_args:
+        - "-p"
+        - "--output-format"
+        - "json"
+      environment:
+        - "CLAUDE_PROJECT_DIR"
+        - "CLAUDE_API_KEY"
+      
+    codex:
+      binary: "codex"
+      interactive_args:
+        - "--ask-for-approval"
+        - "never"
+        - "--sandbox"
+        - "danger-full-access"
+      non_interactive_args:
+        - "exec"
+      environment:
+        - "CODEX_API_KEY"
+      
+    gemini:
+      binary: "gemini"
+      args:
+        - "--format"
+        - "json"
+      environment:
+        - "GEMINI_API_KEY"
+      optional: true
+      notes:
+        - "If the gemini CLI is unavailable, fall back to Gemini API provider"
+
+  streaming_protocol:
+    chunk_size: 4096
+    encoding: "utf-8"
+    line_buffering: true
+    timeout_ms: 30000
+    
+    output_processing:
+      - "Handle partial lines"
+      - "Parse ANSI escape codes"
+      - "Detect and parse JSON output"
+      - "Extract error messages"
+      - "Handle binary data gracefully"
+
+security:
+  process_isolation:
+    sandboxing:
+      - "Use subprocess with no shell"
+      - "Set resource limits (ulimit) and monitor via psutil"
+      - "Restrict file system access"
+      - "Network isolation where applicable"
+      - "Containerized isolation (namespaces/seccomp/cgroups) recommended for production"
+    
+    input_validation:
+      - "Sanitize all user input"
+      - "Prevent command injection"
+      - "Limit prompt size"
+      - "Filter dangerous characters"
+    
+    resource_limits:
+      memory_limit_mb: 512
+      cpu_limit_percent: 50
+      process_limit: 20
+      file_descriptor_limit: 256
+  
+  authentication:
+    methods:
+      - "JWT token validation"
+      - "Session-based auth"
+    
+    token_validation:
+      algorithm: "HS256 (dev) / RS256 (prod recommended)"
+      expiration: 3600
+      refresh_enabled: true
+    
+    rate_limiting:
+      requests_per_minute: 60
+      burst_size: 10
+      per_session: true
+
+  authorization:
+    roles:
+      admin:
+        - "All providers"
+        - "Full access mode"
+        - "No restrictions"
+      
+      developer:
+        - "All providers"
+        - "Full access with approval"
+        - "Rate limited"
+      
+      viewer:
+        - "Read-only access"
+        - "No CLI spawning"
+        - "View existing sessions"
+
+monitoring:
+  metrics:
+    process_metrics:
+      - "active_processes: Gauge"
+      - "process_spawn_duration: Histogram"
+      - "process_lifetime: Histogram"
+      - "process_errors: Counter"
+    
+    session_metrics:
+      - "active_sessions: Gauge"
+      - "session_duration: Histogram"
+      - "messages_processed: Counter"
+      - "bytes_transferred: Counter"
+    
+    websocket_metrics:
+      - "active_connections: Gauge"
+      - "message_latency: Histogram"
+      - "reconnection_count: Counter"
+      - "connection_errors: Counter"
+  
+  logging:
+    levels:
+      - "DEBUG: Detailed process spawning"
+      - "INFO: Session lifecycle events"
+      - "WARNING: Resource limits approached"
+      - "ERROR: Process failures, connection errors"
+    
+    structured_fields:
+      - "session_id"
+      - "provider"
+      - "process_id"
+      - "user_id"
+      - "duration_ms"
+      - "error_type"
+
+  health_checks:
+    endpoints:
+      "/health/cli":
+        checks:
+          - "CLI binaries accessible"
+          - "Process manager running"
+          - "Redis connection"
+          - "Resource availability"
+    
+    monitoring_interval: 30
+    alert_thresholds:
+      process_count: 18
+      memory_usage_percent: 80
+      error_rate_per_minute: 10
+
+testing:
+  unit_tests:
+    coverage_target: 80
+    test_files:
+      - "tests/unit/test_cli_manager.py"
+      - "tests/unit/test_cli_session_manager.py"
+      - "tests/test_cli_websocket.py"
+    
+    test_scenarios:
+      - "Process spawn and termination"
+      - "Command sending and output streaming"
+      - "Session creation and recovery"
+      - "Error handling and recovery"
+      - "Resource limit enforcement"
+  
+  integration_tests:
+    test_files:
+      - "tests/integration/test_cli_integration.py"
+      - "tests/integration/test_cli_end_to_end.py"
+    
+    test_scenarios:
+      - "End-to-end CLI communication"
+      - "Multi-provider switching"
+      - "Session persistence and recovery"
+      - "Concurrent session handling"
+      - "Network failure recovery"
+  
+  performance_tests:
+    test_files:
+      - "tests/performance/test_cli_load.py"
+    
+    benchmarks:
+      - "Process spawn time < 2s"
+      - "Command latency < 500ms"
+      - "Stream throughput > 10KB/s"
+      - "10 concurrent sessions stable"
+      - "Memory per session < 50MB"
+
+deployment:
+  dependencies:
+    system:
+      - "Python >= 3.11"
+      - "Node.js >= 18"
+      - "Redis >= 7.0"
+    
+    python_packages:
+      - "fastapi >= 0.104.0"
+      - "websockets >= 12.0"
+      - "pydantic >= 2.0"
+      - "redis >= 5.0"
+    
+    npm_packages:
+      - "react >= 18.0"
+      - "xterm >= 5.0"
+      - "xterm-addon-fit >= 0.8.0"
+      - "xterm-addon-weblinks >= 0.9.0"
+  
+  configuration:
+    environment_variables:
+      - "CLI_MAX_PROCESSES"
+      - "CLI_IDLE_TIMEOUT"
+      - "CLI_HEALTH_CHECK_INTERVAL"
+      - "REDIS_URL"
+      - "JWT_SECRET"
+      - "LOG_LEVEL"
+    
+    config_files:
+      - "config/cli_providers.yaml"
+      - "config/security.yaml"
+      - "config/monitoring.yaml"
+  
+  rollout_strategy:
+    phases:
+      - "Development environment"
+      - "Staging with limited users"
+      - "Production with feature flag"
+      - "Full production rollout"
+    
+    rollback_plan:
+      - "Feature flag disable"
+      - "Revert to mock CLI"
+      - "Database state preservation"
+      - "Session migration"

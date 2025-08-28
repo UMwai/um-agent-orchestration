@@ -18,6 +18,7 @@ dependencies = [
   "anthropic>=0.34.1",
   "openai>=1.40.0",
   "google-genai>=0.3.0",          # Official GenAI SDK for Gemini API
+  "google-generativeai>=0.8.3",   # Google GenerativeAI for Gemini CLI support
   "httpx>=0.27.0",
   "pyyaml>=6.0.1",
   "typer>=0.12.3",
@@ -25,15 +26,39 @@ dependencies = [
   "prometheus-client>=0.20.0",    # Prometheus Python client
   "apscheduler>=3.10.4",
   "libtmux>=0.28.0",              # programmatic tmux control
+  "pyjwt>=2.8.0",                 # JWT token handling for CLI WebSocket auth
+  "passlib[bcrypt]>=1.7.4",       # password hashing with bcrypt
+  "python-dotenv>=1.0.0",         # environment variable loading
+  "psutil>=5.9.0",                # system and process utilities for CLI monitoring
+  "websockets>=12.0",             # WebSocket support for real-time CLI communication
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.2.0",                # test runner
+  "pytest-asyncio>=0.23.0",       # async test support for CLI WebSocket testing
+  "pytest-timeout>=2.3.0",        # timeout support for CLI process tests
   "mypy>=1.10.0",                 # static typing
   "ruff>=0.5.3",                  # linter/formatter
   "pre-commit>=3.7.1",
   "commitizen>=3.27.0",           # Conventional Commits automation
+]
+
+# Optional dependencies for enhanced CLI integration features
+cli-enhanced = [
+  "watchdog>=4.0.0",              # file system monitoring for CLI session directories
+  "aiofiles>=23.2.1",             # async file I/O for CLI output handling
+  "cryptography>=41.0.0",         # enhanced JWT token security
+]
+
+# Testing dependencies for CLI integration
+test = [
+  "pytest>=8.2.0",
+  "pytest-asyncio>=0.23.0",       # async testing for WebSocket handlers
+  "pytest-timeout>=2.3.0",        # timeout handling for CLI process tests
+  "pytest-mock>=3.14.0",          # mocking for CLI binary tests
+  "httpx>=0.27.0",                # HTTP client for API testing
+  "websocket-client>=1.8.0",      # WebSocket client for integration tests
 ]
 
 [tool.ruff]

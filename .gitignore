@@ -9,3 +9,6 @@ worktrees/
 .idea/
 .vscode/
 *.egg-info/
+node_modules/
+dashboard/node_modules/
+dashboard/dist/

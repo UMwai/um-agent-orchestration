@@ -8,27 +8,28 @@ from orchestrator.settings import load_settings
 def prepare_feature_branch(team: str, task_id: str) -> str:
     s = load_settings()
     branch = f"auto/{team}/{task_id}"
-    # create from latest dev
+    # Fetch latest changes to ensure we have up-to-date refs
     subprocess.run(["git", "fetch", s.default_remote, s.dev_branch], cwd=s.repo_path, check=True)
-    # create branch if missing
-    res = subprocess.run(["git", "rev-parse", "--verify", branch], cwd=s.repo_path)
-    if res.returncode != 0:
-        subprocess.run(
-            ["git", "checkout", "-B", branch, f"{s.default_remote}/{s.dev_branch}"],
-            cwd=s.repo_path,
-            check=True,
-        )
+    # Branch creation will be handled by worktrees.ensure_worktree()
     return branch
 
 
-def rebase_onto_dev(branch: str) -> None:
+def rebase_onto_dev(branch: str, workdir: str = None) -> None:
     s = load_settings()
-    subprocess.run(["git", "fetch", s.default_remote, s.dev_branch], cwd=s.repo_path, check=True)
-    # Use autostash to avoid dirty-tree issues during rebase
-    subprocess.run(["git", "checkout", branch], cwd=s.repo_path, check=True)
+    cwd = workdir or s.repo_path
+
+    # Fetch latest changes
+    subprocess.run(["git", "fetch", s.default_remote, s.dev_branch], cwd=cwd, check=True)
+
+    # If we have a workdir (worktree), we're already on the correct branch
+    # Otherwise, checkout the branch in main repo
+    if not workdir:
+        subprocess.run(["git", "checkout", branch], cwd=cwd, check=True)
+
+    # Rebase onto latest dev branch
     subprocess.run(
         ["git", "rebase", "--autostash", f"{s.default_remote}/{s.dev_branch}"],
-        cwd=s.repo_path,
+        cwd=cwd,
         check=True,
     )
 

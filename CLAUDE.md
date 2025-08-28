@@ -54,6 +54,11 @@ claude --dangerously-skip-permissions
 # Launch Codex as orchestrating agent in this repo  
 codex --ask-for-approval never --sandbox danger-full-access
 
+# Alternative Codex commands for specific scenarios:
+codex --ask-for-approval never --sandbox danger-full-access exec "Review and implement feature X"
+codex --ask-for-approval never --sandbox danger-full-access chat  # Interactive mode
+codex --ask-for-approval never --sandbox danger-full-access apply  # Apply changes mode
+
 # In the agent session, load helper functions:
 exec(open('scripts/agent_helpers.py').read())
 
@@ -62,6 +67,48 @@ submit("Fix authentication bug", "Login returns 500 error", "backend")
 tasks()  # List all tasks
 status("task-id")  # Check specific task
 get_metrics()  # System metrics
+```
+
+Model Defaults
+- OpenAI API default model is configured as `gpt-5`.
+- To change it, edit `config/config.yaml` → `providers.openai_api.model`.
+- Example:
+```yaml
+providers:
+  openai_api:
+    mode: "api"
+    provider_type: "api"
+    model: "gpt-5"   # ensure GPT-5 is active
+```
+
+**Multi-Agent Task Distribution:**
+```bash
+# Distribute tasks across multiple agents for parallel processing
+# See AGENTS.md for comprehensive multi-agent coordination patterns
+
+# Primary orchestrator (for task management and coordination)
+claude --dangerously-skip-permissions
+
+# Backend specialist (for API, database, services)
+codex --ask-for-approval never --sandbox danger-full-access exec "Handle backend tasks"
+
+# Frontend specialist (for UI, components, styling)  
+codex --ask-for-approval never --sandbox danger-full-access exec "Handle frontend tasks"
+
+# Infrastructure specialist (for DevOps, deployment, monitoring)
+codex --ask-for-approval never --sandbox danger-full-access exec "Handle infrastructure tasks"
+
+# Testing specialist (for QA, validation, security)
+codex --ask-for-approval never --sandbox danger-full-access exec "Handle testing and QA"
+
+# Each agent can load specialized helpers:
+exec(open('scripts/agent_helpers.py').read())
+load_agent_role('backend')  # Load role-specific configurations
+
+# Multi-agent coordination patterns (see AGENTS.md):
+coordinate_agents()  # Orchestrator manages task distribution
+distribute_task("feature-name", ["backend", "frontend", "testing"])
+monitor_agent_progress()  # Track parallel development
 ```
 
 ## Architecture Overview
@@ -106,3 +153,28 @@ get_metrics()  # System metrics
 **Git workflow**: Always work in feature branches with conventional commit messages. The system uses git worktrees - never modify the root checkout directly.
 
 **Testing**: Use pytest with FastAPI + ruff + mypy conventions. Add tests for all new functionality.
+
+## Multi-Agent Development
+
+For complex features requiring parallel development across multiple specializations, use the multi-agent coordination patterns defined in **AGENTS.md**:
+
+- **Task Distribution**: Break complex features into specialized components
+- **Parallel Development**: Multiple agents working simultaneously in isolated git worktrees  
+- **Role-Based Specialization**: Backend, frontend, infrastructure, and testing specialists
+- **Coordination Patterns**: Orchestrator manages dependencies and integration
+
+**Quick Multi-Agent Setup:**
+```bash
+# 1. Primary orchestrator for coordination
+claude --dangerously-skip-permissions
+
+# 2. Specialized agents for parallel work
+codex --ask-for-approval never --sandbox danger-full-access exec "Backend development"
+codex --ask-for-approval never --sandbox danger-full-access exec "Frontend development" 
+codex --ask-for-approval never --sandbox danger-full-access exec "Testing and QA"
+
+# 3. Load shared helpers in each agent session
+exec(open('scripts/agent_helpers.py').read())
+```
+
+See **AGENTS.md** for comprehensive multi-agent workflows, role configurations, and coordination patterns.

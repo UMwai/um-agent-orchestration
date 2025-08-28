@@ -114,7 +114,7 @@
         
         .task-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 8px;
         }
@@ -148,6 +148,30 @@
             color: #cbd5e1;
         }
         
+        .task-progress {
+            margin-top: 8px;
+            background: #475569;
+            border-radius: 4px;
+            height: 4px;
+            overflow: hidden;
+        }
+        
+        .task-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .task-progress.running .task-progress-bar {
+            animation: progress-pulse 2s infinite;
+        }
+        
+        @keyframes progress-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
         .agent-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -163,7 +187,7 @@
         
         .agent-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
         }
@@ -208,6 +232,7 @@
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             transition: all 0.2s;
+            z-index: 1000;
         }
         
         .refresh-button:hover {
@@ -470,12 +495,542 @@
             color: white;
         }
         
+        /* Mode toggle styles */
+        .mode-toggle {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 4px;
+            display: flex;
+            gap: 2px;
+            margin-right: 16px;
+        }
+        
+        .mode-option {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .mode-option:hover {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        
+        .mode-option.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Model selector styles */
+        .model-selector {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .model-select {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 8px 32px 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            appearance: none;
+            min-width: 160px;
+        }
+        
+        .model-select:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+        
+        .model-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .model-selector::after {
+            content: '▼';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+            font-size: 0.75rem;
+        }
+        
+        .model-status {
+            font-size: 0.75rem;
+            color: #10b981;
+            margin-left: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .mode-indicator {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-left: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Real CLI Terminal interface styles */
+        .cli-terminal-container {
+            background: #0f1419;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            position: relative;
+        }
+        
+        .cli-terminal-header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .cli-session-tabs {
+            display: flex;
+            gap: 4px;
+            background: #0f172a;
+            padding: 8px 16px;
+            border-bottom: 1px solid #334155;
+            overflow-x: auto;
+        }
+        
+        .cli-session-tab {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px 6px 0 0;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .cli-session-tab:hover {
+            background: #334155;
+        }
+        
+        .cli-session-tab.active {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
+        }
+        
+        .cli-session-close {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .cli-session-close:hover {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .cli-status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.75rem;
+        }
+        
+        .cli-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #334155;
+        }
+        
+        .cli-status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        
+        .status-initializing .cli-status-dot { background: #64748b; }
+        .status-starting .cli-status-dot { background: #f59e0b; animation: pulse 1.5s infinite; }
+        .status-running .cli-status-dot { background: #10b981; }
+        .status-waiting_input .cli-status-dot { background: #8b5cf6; animation: pulse 1.5s infinite; }
+        .status-processing .cli-status-dot { background: #3b82f6; animation: pulse 1.5s infinite; }
+        .status-error .cli-status-dot { background: #ef4444; }
+        .status-terminated .cli-status-dot { background: #6b7280; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .cli-connection-status {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #1e293b;
+        }
+        
+        .connection-connected { color: #10b981; }
+        .connection-connecting { color: #f59e0b; }
+        .connection-disconnected { color: #ef4444; }
+        
+        .terminal-container {
+            background: #0f1419;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+        }
+        
+        .terminal-header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .terminal-title {
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .terminal-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .terminal-control.close { background: #ef4444; }
+        .terminal-control.minimize { background: #f59e0b; }
+        .terminal-control.maximize { background: #10b981; }
+        
+        .cli-terminal-output {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            position: relative;
+        }
+        
+        .cli-output-line {
+            margin-bottom: 2px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .cli-output-stdout { color: #e2e8f0; }
+        .cli-output-stderr { color: #ef4444; }
+        .cli-output-system { color: #64748b; font-style: italic; }
+        .cli-output-auth { color: #8b5cf6; background: #1e293b; padding: 4px 8px; border-radius: 4px; }
+        
+        .cli-auth-prompt {
+            background: #8b5cf6;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: glow 2s infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.6); }
+        }
+        
+        .cli-process-status {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .terminal-output {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        
+        .terminal-output::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-track {
+            background: #0f1419;
+        }
+        
+        .terminal-output::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        
+        .terminal-prompt {
+            color: #10b981;
+            margin-right: 8px;
+        }
+        
+        .terminal-command {
+            color: #e2e8f0;
+        }
+        
+        .terminal-result {
+            color: #94a3b8;
+            margin: 8px 0 16px 0;
+            padding-left: 16px;
+            border-left: 2px solid #334155;
+        }
+        
+        .terminal-error {
+            color: #ef4444;
+            margin: 8px 0 16px 0;
+            padding-left: 16px;
+            border-left: 2px solid #ef4444;
+        }
+        
+        .terminal-success {
+            color: #10b981;
+            margin: 8px 0 16px 0;
+            padding-left: 16px;
+            border-left: 2px solid #10b981;
+        }
+        
+        .cli-terminal-input-container {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border-radius: 0 0 8px 8px;
+            position: relative;
+        }
+        
+        .cli-terminal-input {
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: 0.875rem;
+            width: 100%;
+            outline: none;
+        }
+        
+        .cli-terminal-input::placeholder {
+            color: #64748b;
+        }
+        
+        .cli-terminal-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .cli-input-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 8px;
+        }
+        
+        .cli-input-action {
+            background: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .cli-input-action:hover {
+            background: #475569;
+        }
+        
+        .cli-input-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .cli-session-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .cli-new-session-btn {
+            background: #10b981;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .cli-new-session-btn:hover {
+            background: #059669;
+        }
+        
+        .terminal-input-container {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: 0.875rem;
+            width: 100%;
+            outline: none;
+        }
+        
+        .terminal-input::placeholder {
+            color: #64748b;
+        }
+        
+        .command-history {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            display: none;
+        }
+        
+        .command-history.show {
+            display: block;
+        }
+        
+        .history-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .history-item:hover {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .quick-commands {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-command {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        
+        .quick-command:hover {
+            background: #334155;
+            border-color: #3b82f6;
+        }
+        
+        .quick-command-title {
+            color: #3b82f6;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .quick-command-desc {
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+        
     </style>
 </head>
 <body>
     <div id="dashboard-root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-presets="env,react">
         const { useState, useEffect } = React;
 
         // Mock data for demonstration - would be replaced with API calls
@@ -582,7 +1137,6 @@
             const [agents, setAgents] = useState([]);
             const [mergeQueue, setMergeQueue] = useState({currently_merging: null, queue: [], queue_length: 0});
             const [repositories, setRepositories] = useState([]);
-            const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' or 'cli'
             const [newTask, setNewTask] = useState({
                 title: '',
                 description: '',
@@ -595,6 +1149,241 @@
             const [repositorySpecs, setRepositorySpecs] = useState([]);
             const [selectedSpec, setSelectedSpec] = useState(null);
             const [specViewMode, setSpecViewMode] = useState('summary'); // 'summary' | 'phases' | 'content'
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [submitError, setSubmitError] = useState(null);
+            const [submitSuccess, setSubmitSuccess] = useState(false);
+            const [websocket, setWebsocket] = useState(null);
+            const [connectionStatus, setConnectionStatus] = useState('disconnected');
+            const [selectedModel, setSelectedModel] = useState('claude');
+            const [modelMode, setModelMode] = useState('cli'); // 'cli' or 'api'
+            
+            // Real CLI session states
+            const [cliSessions, setCliSessions] = useState({});
+            const [activeSessionId, setActiveSessionId] = useState(null);
+            const [cliWebsockets, setCliWebsockets] = useState({});
+            const [cliProviders, setCliProviders] = useState({});
+
+            // Fetch available CLI providers
+            const fetchCliProviders = async () => {
+                try {
+                    const response = await fetch('/api/cli/providers');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setCliProviders(data.providers);
+                        
+                        // Auto-select first available provider
+                        const availableProviders = Object.keys(data.providers)
+                            .filter(key => data.providers[key].available);
+                        if (availableProviders.length > 0 && modelMode === 'cli') {
+                            setSelectedModel(availableProviders[0]);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching CLI providers:', error);
+                }
+            };
+            
+            // CLI session management functions
+            const createCliSession = async (cliTool, fullAccess = false) => {
+                try {
+                    const response = await fetch('/api/cli/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            cli_tool: cliTool,
+                            mode: fullAccess ? 'interactive' : 'cli',
+                            full_access: fullAccess,
+                            cwd: metrics.repository?.path
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const sessionData = await response.json();
+                        const sessionId = sessionData.session_id;
+                        
+                        // Initialize session state
+                        const newSession = {
+                            id: sessionId,
+                            cli_tool: cliTool,
+                            mode: sessionData.mode,
+                            state: sessionData.state,
+                            output: [{
+                                type: 'system',
+                                content: `Starting ${cliTool} CLI session...`,
+                                timestamp: Date.now()
+                            }],
+                            input: '',
+                            connectionStatus: 'connecting',
+                            fullAccess: fullAccess,
+                            authRequired: false
+                        };
+                        
+                        setCliSessions(prev => ({...prev, [sessionId]: newSession}));
+                        setActiveSessionId(sessionId);
+                        
+                        // Connect WebSocket
+                        connectCliWebSocket(sessionId);
+                        
+                        return sessionId;
+                    }
+                } catch (error) {
+                    console.error('Failed to create CLI session:', error);
+                }
+                return null;
+            };
+            
+            const connectCliWebSocket = (sessionId) => {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                // Add token as query parameter for authentication if needed
+                const token = localStorage.getItem('cli_auth_token') || '';
+                const wsUrl = `${protocol}//${window.location.host}/ws/cli/${sessionId}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+                
+                const ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    console.log(`CLI WebSocket connected for session ${sessionId}`);
+                    setCliSessions(prev => ({
+                        ...prev,
+                        [sessionId]: {
+                            ...prev[sessionId],
+                            connectionStatus: 'connected'
+                        }
+                    }));
+                };
+                
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        const payload = msg.data || {};
+
+                        if (msg.type === 'output') {
+                            const outputType = payload.output_type || 'stdout';
+                            const content = payload.content ?? payload.output ?? '';
+                            const ts = payload.timestamp || Date.now();
+
+                            setCliSessions(prev => ({
+                                ...prev,
+                                [sessionId]: {
+                                    ...prev[sessionId],
+                                    output: [...(prev[sessionId]?.output || []), {
+                                        type: outputType,
+                                        content,
+                                        timestamp: ts
+                                    }]
+                                }
+                            }));
+                        } else if (msg.type === 'status') {
+                            // Handle both legacy {session: {...}} and new {data: {...}} formats
+                            const sessionInfo = payload.session || payload;
+                            setCliSessions(prev => ({
+                                ...prev,
+                                [sessionId]: {
+                                    ...prev[sessionId],
+                                    state: sessionInfo.state ?? prev[sessionId]?.state,
+                                    authRequired: sessionInfo.authentication_required ?? prev[sessionId]?.authRequired,
+                                    authPrompt: sessionInfo.auth_prompt ?? prev[sessionId]?.authPrompt,
+                                    pid: sessionInfo.pid ?? prev[sessionId]?.pid,
+                                    connectionStatus: prev[sessionId]?.connectionStatus || 'connected'
+                                }
+                            }));
+                        }
+                    } catch (error) {
+                        console.error('Error parsing CLI WebSocket message:', error);
+                    }
+                };
+                
+                ws.onclose = () => {
+                    console.log(`CLI WebSocket disconnected for session ${sessionId}`);
+                    setCliSessions(prev => ({
+                        ...prev,
+                        [sessionId]: {
+                            ...prev[sessionId],
+                            connectionStatus: 'disconnected'
+                        }
+                    }));
+                };
+                
+                ws.onerror = (error) => {
+                    console.error(`CLI WebSocket error for session ${sessionId}:`, error);
+                    setCliSessions(prev => ({
+                        ...prev,
+                        [sessionId]: {
+                            ...prev[sessionId],
+                            connectionStatus: 'error'
+                        }
+                    }));
+                };
+                
+                setCliWebsockets(prev => ({...prev, [sessionId]: ws}));
+            };
+            
+            const sendCliInput = (sessionId, input, inputType = 'command') => {
+                const ws = cliWebsockets[sessionId];
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const message = {
+                        type: inputType,
+                        session_id: sessionId,
+                        data: {
+                            command: input
+                        },
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    ws.send(JSON.stringify(message));
+                    
+                    // Add input to display
+                    setCliSessions(prev => ({
+                        ...prev,
+                        [sessionId]: {
+                            ...prev[sessionId],
+                            output: [...(prev[sessionId]?.output || []), {
+                                type: 'command',
+                                content: input,
+                                timestamp: Date.now()
+                            }],
+                            input: ''
+                        }
+                    }));
+                }
+            };
+            
+            const terminateCliSession = async (sessionId) => {
+                try {
+                    // Close WebSocket
+                    const ws = cliWebsockets[sessionId];
+                    if (ws) {
+                        ws.close();
+                    }
+                    
+                    // Terminate on server
+                    await fetch(`/api/cli/sessions/${sessionId}/terminate`, {
+                        method: 'POST'
+                    });
+                    
+                    // Remove from state
+                    setCliSessions(prev => {
+                        const newSessions = {...prev};
+                        delete newSessions[sessionId];
+                        return newSessions;
+                    });
+                    
+                    setCliWebsockets(prev => {
+                        const newWebsockets = {...prev};
+                        delete newWebsockets[sessionId];
+                        return newWebsockets;
+                    });
+                    
+                    // Switch to another session or none
+                    if (activeSessionId === sessionId) {
+                        const remainingSessions = Object.keys(cliSessions).filter(id => id !== sessionId);
+                        setActiveSessionId(remainingSessions.length > 0 ? remainingSessions[0] : null);
+                    }
+                    
+                } catch (error) {
+                    console.error('Failed to terminate CLI session:', error);
+                }
+            };
+            
 
             // Fetch real data from APIs
             const fetchMetrics = async () => {
@@ -727,6 +1516,49 @@
                 }
             };
 
+            // Initialize WebSocket connection
+            const initWebSocket = () => {
+                try {
+                    const ws = new WebSocket(`ws://localhost:8001/ws`);
+                    
+                    ws.onopen = () => {
+                        console.log('WebSocket connected');
+                        setConnectionStatus('connected');
+                        setWebsocket(ws);
+                    };
+                    
+                    ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            if (data.type === 'task_submitted') {
+                                fetchTasks();
+                                fetchMetrics();
+                            } else if (data.type === 'merge_queue_update') {
+                                fetchMergeQueue();
+                            }
+                        } catch (e) {
+                            console.log('WebSocket message:', event.data);
+                        }
+                    };
+                    
+                    ws.onclose = () => {
+                        console.log('WebSocket disconnected');
+                        setConnectionStatus('disconnected');
+                        setWebsocket(null);
+                        // Attempt to reconnect after 5 seconds
+                        setTimeout(initWebSocket, 5000);
+                    };
+                    
+                    ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        setConnectionStatus('error');
+                    };
+                } catch (error) {
+                    console.error('Failed to initialize WebSocket:', error);
+                    setConnectionStatus('error');
+                }
+            };
+
             // Load data on mount and set up refresh interval
             React.useEffect(() => {
                 fetchMetrics();
@@ -736,6 +1568,10 @@
                 fetchRepositories();
                 fetchBranches('um-agent-orchestration'); // Load branches for current repo
                 fetchSpecs('um-agent-orchestration'); // Load specs for current repo
+                fetchCliProviders(); // Load available CLI providers
+                
+                // Initialize WebSocket for real-time updates
+                initWebSocket();
                 
                 const interval = setInterval(() => {
                     fetchMetrics();
@@ -743,11 +1579,21 @@
                     fetchAgents();
                     fetchMergeQueue();
                 }, 30000); // Refresh every 30s
-                return () => clearInterval(interval);
+                
+                return () => {
+                    clearInterval(interval);
+                    if (websocket) {
+                        websocket.close();
+                    }
+                };
             }, []);
 
             const handleSubmitTask = async (e) => {
                 e.preventDefault();
+                setIsSubmitting(true);
+                setSubmitError(null);
+                setSubmitSuccess(false);
+                
                 try {
                     const taskSpec = {
                         id: `task-${Date.now()}`,
@@ -768,16 +1614,22 @@
                     if (response.ok) {
                         const result = await response.json();
                         console.log('Task submitted:', result);
+                        setSubmitSuccess(true);
                         // Reset form
                         setNewTask({ title: '', description: '', role: 'generic', repositoryUrl: '', baseBranch: '', fullAccess: false });
                         // Refresh data to show updated counts and new task
                         fetchMetrics();
                         fetchTasks();
+                        // Clear success message after 3 seconds
+                        setTimeout(() => setSubmitSuccess(false), 3000);
                     } else {
-                        console.error('Failed to submit task');
+                        const errorData = await response.json().catch(() => ({}));
+                        setSubmitError(`Failed to submit task: ${errorData.detail || 'Unknown error'}`);
                     }
                 } catch (error) {
-                    console.error('Error submitting task:', error);
+                    setSubmitError(`Network error: ${error.message}`);
+                } finally {
+                    setIsSubmitting(false);
                 }
             };
 
@@ -788,6 +1640,26 @@
                 fetchMergeQueue();
                 console.log('Refreshing dashboard data...');
             };
+            
+            
+            // Auto-scroll real CLI output
+            React.useEffect(() => {
+                const cliOutput = document.querySelector('.cli-terminal-output');
+                if (cliOutput) {
+                    cliOutput.scrollTop = cliOutput.scrollHeight;
+                }
+            }, [cliSessions, activeSessionId]);
+            
+            // Clean up WebSocket connections on unmount
+            React.useEffect(() => {
+                return () => {
+                    Object.values(cliWebsockets).forEach(ws => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.close();
+                        }
+                    });
+                };
+            }, []);
 
             const runningTasks = tasks.filter(t => t.status === 'running' || t.status === 'queued');
             const completedTasks = tasks.filter(t => t.status === 'passed' || t.status === 'failed');
@@ -801,37 +1673,84 @@
                                 <p>Underground Mission Unit 7 • Classified Operations Dashboard</p>
                                 <div style={{marginTop: '12px', fontSize: '0.875rem', color: '#94a3b8'}}>
                                     📁 Repository: <span style={{color: '#3b82f6'}}>{metrics.repository?.name || 'unknown'}</span> • 
-                                    🌿 Branch: <span style={{color: '#10b981'}}>{metrics.repository?.branch || 'unknown'}</span>
+                                    🌿 Branch: <span style={{color: '#10b981'}}>{metrics.repository?.branch || 'unknown'}</span> •
+                                    <span style={{color: connectionStatus === 'connected' ? '#10b981' : '#ef4444'}}>
+                                        {connectionStatus === 'connected' ? '🟢 Live' : connectionStatus === 'error' ? '🔴 Error' : '🟡 Connecting...'}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="view-toggle">
-                                <button 
-                                    onClick={() => setViewMode('dashboard')}
-                                    className={`toggle-btn ${viewMode === 'dashboard' ? 'active' : ''}`}
-                                >
-                                    📊 Dashboard
-                                </button>
-                                <button 
-                                    onClick={() => setViewMode('cli')}
-                                    className={`toggle-btn ${viewMode === 'cli' ? 'active' : ''}`}
-                                >
-                                    💻 CLI
-                                </button>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+                                <div className="mode-toggle">
+                                    <button 
+                                        className={`mode-option ${modelMode === 'cli' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setModelMode('cli');
+                                            setSelectedModel('claude');
+                                        }}
+                                    >
+                                        💻 CLI
+                                    </button>
+                                    <button 
+                                        className={`mode-option ${modelMode === 'api' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setModelMode('api');
+                                            setSelectedModel('gpt-5');
+                                        }}
+                                    >
+                                        ☁️ API
+                                    </button>
+                                </div>
+                                <div className="model-selector">
+                                    <select 
+                                        className="model-select" 
+                                        value={selectedModel} 
+                                        onChange={(e) => setSelectedModel(e.target.value)}
+                                    >
+                                        {modelMode === 'cli' ? (
+                                            <React.Fragment>
+                                                {Object.entries(cliProviders).map(([key, provider]) => (
+                                                    <option 
+                                                        key={key} 
+                                                        value={key} 
+                                                        disabled={!provider.available}
+                                                    >
+                                                        {provider.available ? '✅' : '❌'} {provider.name} CLI
+                                                    </option>
+                                                ))}
+                                            </React.Fragment>
+                                        ) : (
+                                            <React.Fragment>
+                                                <option value="gpt-5">🧠 GPT-5</option>
+                                                <option value="claude-sonnet-4">🤖 Claude Sonnet 4</option>
+                                                <option value="gpt-4o">🧠 GPT-4o</option>
+                                                <option value="gemini-pro-2.0">💎 Gemini Pro 2.0</option>
+                                            </React.Fragment>
+                                        )}
+                                    </select>
+                                    <span className="model-status">
+                                        {modelMode === 'cli' && cliProviders[selectedModel] ? (
+                                            cliProviders[selectedModel].available ? '✅ Available' : '❌ Not Installed'
+                                        ) : (
+                                            '● Active'
+                                        )}
+                                    </span>
+                                    <span className="mode-indicator">
+                                        {modelMode === 'cli' ? '💻 Local' : '☁️ Cloud'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {viewMode === 'dashboard' ? (
-                        <>
                     <div className="metrics-grid">
-                        <div className="metric-card">
-                            <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.tasksEnqueued}</div>
-                            <div className="metric-label">Total Enqueued</div>
-                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
-                        </div>
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#3b82f6'}}>{metrics.tasksRunning}</div>
                             <div className="metric-label">Currently Running</div>
+                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
+                        </div>
+                        <div className="metric-card">
+                            <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.tasksEnqueued}</div>
+                            <div className="metric-label">Total Enqueued</div>
                             <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                         <div className="metric-card">
@@ -842,26 +1761,6 @@
                         <div className="metric-card">
                             <div className="metric-value" style={{color: '#ef4444'}}>{metrics.tasksFailed}</div>
                             <div className="metric-label">Failed Tasks</div>
-                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
-                        </div>
-                        <div className="metric-card">
-                            <div className="metric-value" style={{color: '#8b5cf6'}}>{metrics.commitsMade}</div>
-                            <div className="metric-label">Auto Commits</div>
-                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
-                        </div>
-                        <div className="metric-card">
-                            <div className="metric-value" style={{color: '#06b6d4'}}>{metrics.prsOpened}</div>
-                            <div className="metric-label">PRs Opened</div>
-                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
-                        </div>
-                        <div className="metric-card">
-                            <div className="metric-value" style={{color: '#f59e0b'}}>{metrics.prsQueued}</div>
-                            <div className="metric-label">PRs In Queue</div>
-                            <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
-                        </div>
-                        <div className="metric-card">
-                            <div className="metric-value" style={{color: '#ef4444'}}>{metrics.conflictsDetected}</div>
-                            <div className="metric-label">Conflicts Detected</div>
                             <div className="metric-repo">{metrics.repository?.name || 'unknown'}</div>
                         </div>
                     </div>
@@ -889,10 +1788,7 @@
                                         <option value="generic">Generic</option>
                                         <option value="backend">Backend</option>
                                         <option value="frontend">Frontend</option>
-                                        <option value="data">Data</option>
-                                        <option value="ml">ML</option>
-                                        <option value="computational_biologist">Computational Biologist</option>
-                                        <option value="fund_manager">Fund Manager</option>
+                                        <option value="data">Data/ML</option>
                                     </select>
                                 </div>
                             </div>
@@ -944,8 +1840,40 @@
                                     Enable Full Access Mode (--dangerously-skip-permissions)
                                 </label>
                             </div>
-                            <button type="submit" className="submit-button">
-                                🚀 Submit Task
+                            {submitError && (
+                                <div style={{
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    marginBottom: '16px',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    ❌ {submitError}
+                                </div>
+                            )}
+                            {submitSuccess && (
+                                <div style={{
+                                    background: '#10b981',
+                                    color: 'white',
+                                    padding: '12px',
+                                    borderRadius: '6px',
+                                    marginBottom: '16px',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    ✅ Task submitted successfully!
+                                </div>
+                            )}
+                            <button 
+                                type="submit" 
+                                className="submit-button"
+                                disabled={isSubmitting}
+                                style={{
+                                    opacity: isSubmitting ? 0.6 : 1,
+                                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                {isSubmitting ? '⏳ Submitting...' : '🚀 Submit Task'}
                             </button>
                         </form>
                     </div>
@@ -1071,6 +1999,19 @@
                                     <div className="task-description">
                                         {task.description}
                                     </div>
+                                    {task.status === 'running' && (
+                                        <div className={`task-progress ${task.status}`}>
+                                            <div 
+                                                className="task-progress-bar"
+                                                style={{width: `${task.progress || 50}%`}}
+                                            ></div>
+                                        </div>
+                                    )}
+                                    {task.status === 'queued' && (
+                                        <div style={{fontSize: '0.75rem', color: '#f59e0b', marginTop: '8px'}}>
+                                            ⏱️ Waiting in queue...
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -1164,78 +2105,293 @@
                     <button className="refresh-button" onClick={refreshData} title="Refresh Dashboard">
                         ↻
                     </button>
-                        </>
-                    ) : (
-                        <div className="cli-view">
-                            <div className="cli-header">🎯 Agent UM-7 Command Interface</div>
-                            
-                            <div className="cli-commands">
-                                <div className="cli-command">
-                                    <div className="cli-command-title">Submit Task</div>
-                                    <div className="cli-command-code">
-                                        {`curl -X POST http://localhost:8001/tasks -H "Content-Type: application/json" -d '{
-  "id": "my-task-id",
-  "title": "Task title",
-  "description": "Task description", 
-  "role": "backend",
-  "repository_url": "https://github.com/username/repo.git"
-}'`}
-                                    </div>
-                                </div>
-                                
-                                <div className="cli-command">
-                                    <div className="cli-command-title">List All Tasks</div>
-                                    <div className="cli-command-code">curl http://localhost:8001/tasks</div>
-                                </div>
-                                
-                                <div className="cli-command">
-                                    <div className="cli-command-title">Get Task Status</div>
-                                    <div className="cli-command-code">curl http://localhost:8001/tasks/TASK-ID</div>
-                                </div>
-                                
-                                <div className="cli-command">
-                                    <div className="cli-command-title">Get Metrics</div>
-                                    <div className="cli-command-code">curl http://localhost:8001/api/metrics</div>
-                                </div>
-                                
-                                <div className="cli-command">
-                                    <div className="cli-command-title">Agent Helper Functions</div>
-                                    <div className="cli-command-code">
-                                        {`# In Claude/Codex session:
-exec(open('/home/umwai/um-agent-orchestration/scripts/agent_helpers.py').read())
-submit("Fix bug", "Description", "backend")
-tasks()  # List tasks
-status("task-id")  # Get status`}
-                                    </div>
-                                </div>
-                                
-                                <div className="cli-command">
-                                    <div className="cli-command-title">Full Access Mode</div>
-                                    <div className="cli-command-code">
-                                        {`# Claude Code full access
-claude --dangerously-skip-permissions
 
-# Codex full access
-codex --ask-for-approval never --sandbox danger-full-access`}
-                                    </div>
-                                </div>
+                    {/* CLI Interface Section */}
+                    <div className="cli-section" style={{marginTop: '24px'}}>
+                        <h2 className="section-title">💻 CLI Interface</h2>
+                        <div className="cli-controls" style={{marginBottom: '20px'}}>
+                            <div className="cli-info" style={{marginBottom: '12px'}}>
+                                <p style={{color: '#94a3b8', margin: 0, fontSize: '0.875rem'}}>
+                                    Launch real {selectedModel} CLI sessions • {modelMode === 'cli' ? 'Uses local CLI tools' : 'Direct API integration'}
+                                </p>
+                                <p style={{color: '#64748b', margin: '4px 0 0 0', fontSize: '0.75rem'}}>
+                                    Sessions run actual commands and maintain persistent state
+                                </p>
                             </div>
-                            
-                            <div style={{marginTop: '20px', padding: '12px', background: '#1e293b', borderRadius: '6px', fontSize: '0.875rem'}}>
-                                <div style={{color: '#10b981', marginBottom: '8px'}}>💡 Quick Start:</div>
-                                <div style={{color: '#94a3b8'}}>
-                                    1. Load agent helpers in any repo: <code style={{color: '#f59e0b'}}>exec(open('path/to/agent_helpers.py').read())</code><br/>
-                                    2. Submit tasks: <code style={{color: '#f59e0b'}}>submit("title", "description", "role")</code><br/>
-                                    3. Monitor: <code style={{color: '#f59e0b'}}>tasks()</code> and <code style={{color: '#f59e0b'}}>get_metrics()</code>
-                                </div>
+                            <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                                <button 
+                                    className="cli-new-session-btn"
+                                    onClick={() => createCliSession(selectedModel, false)}
+                                    title="Start a standard CLI session"
+                                >
+                                    + New Session
+                                </button>
+                                <button 
+                                    className="cli-new-session-btn" 
+                                    style={{background: '#8b5cf6'}}
+                                    onClick={() => createCliSession(selectedModel, true)}
+                                    title="Start with full file system access (danger mode)"
+                                >
+                                    🔓 Full Access
+                                </button>
                             </div>
                         </div>
-                    )}
+                                {/* Real CLI Terminal Interface */}
+                                <div className="cli-terminal-container">
+                                    {/* Session Tabs */}
+                                    {Object.keys(cliSessions).length > 0 && (
+                                        <div className="cli-session-tabs">
+                                            {Object.values(cliSessions).map(session => (
+                                                <div
+                                                    key={session.id}
+                                                    className={`cli-session-tab ${activeSessionId === session.id ? 'active' : ''}`}
+                                                    onClick={() => setActiveSessionId(session.id)}
+                                                >
+                                                    <span className={`cli-status-dot status-${session.state}`}></span>
+                                                    {session.cli_tool}
+                                                    {session.fullAccess && ' 🔓'}
+                                                    <button
+                                                        className="cli-session-close"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            terminateCliSession(session.id);
+                                                        }}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    
+                                    {activeSessionId && cliSessions[activeSessionId] ? (
+                                        <React.Fragment>
+                                            {/* Terminal Header */}
+                                            <div className="cli-terminal-header">
+                                                <div className="terminal-title">
+                                                    🎯 {cliSessions[activeSessionId].cli_tool.toUpperCase()} CLI Session
+                                                    {cliSessions[activeSessionId].fullAccess && ' • FULL ACCESS'}
+                                                </div>
+                                                <div className="cli-status-indicators">
+                                                    <div className={`cli-status-indicator status-${cliSessions[activeSessionId].state}`}>
+                                                        <div className="cli-status-dot"></div>
+                                                        {cliSessions[activeSessionId].state.replace('_', ' ')}
+                                                    </div>
+                                                    <div className={`cli-connection-status connection-${cliSessions[activeSessionId].connectionStatus}`}>
+                                                        {cliSessions[activeSessionId].connectionStatus}
+                                                    </div>
+                                                    {cliSessions[activeSessionId].pid && (
+                                                        <div className="cli-status-indicator">
+                                                            PID: {cliSessions[activeSessionId].pid}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Terminal Output */}
+                                            <div className="cli-terminal-output">
+                                                {cliSessions[activeSessionId].authRequired && (
+                                                    <div className="cli-auth-prompt" style={{
+                                                        background: '#fef3c7',
+                                                        color: '#92400e',
+                                                        padding: '12px',
+                                                        borderRadius: '6px',
+                                                        marginBottom: '12px',
+                                                        border: '1px solid #fbbf24'
+                                                    }}>
+                                                        <div style={{fontWeight: 'bold', marginBottom: '4px'}}>
+                                                            🔐 Authentication Required
+                                                        </div>
+                                                        <div style={{fontSize: '0.875rem'}}>
+                                                            {cliSessions[activeSessionId].authPrompt}
+                                                        </div>
+                                                        <div style={{fontSize: '0.75rem', marginTop: '8px', color: '#78350f'}}>
+                                                            💡 Enter your credentials in the input field below. Input is hidden for security.
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="cli-process-status">
+                                                    <span className={`cli-status-dot status-${cliSessions[activeSessionId].state}`}></span>
+                                                    {cliSessions[activeSessionId].state.replace('_', ' ')}
+                                                </div>
+                                                
+                                                {cliSessions[activeSessionId].output.map((entry, idx) => (
+                                                    <div key={idx} className={`cli-output-line cli-output-${entry.type}`}>
+                                                        {entry.type === 'command' && (
+                                                            <span style={{color: '#10b981'}}>
+                                                                {cliSessions[activeSessionId].cli_tool}$ 
+                                                            </span>
+                                                        )}
+                                                        {entry.content}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Terminal Input */}
+                                            <div className="cli-terminal-input-container">
+                                                <span className="terminal-prompt" style={{color: '#10b981'}}>
+                                                    {cliSessions[activeSessionId].cli_tool}$ 
+                                                </span>
+                                                <input
+                                                    type={cliSessions[activeSessionId].authRequired ? "password" : "text"}
+                                                    className="cli-terminal-input"
+                                                    value={cliSessions[activeSessionId].input}
+                                                    onChange={(e) => setCliSessions(prev => ({
+                                                        ...prev,
+                                                        [activeSessionId]: {
+                                                            ...prev[activeSessionId],
+                                                            input: e.target.value
+                                                        }
+                                                    }))}
+                                                    onKeyDown={(e) => {
+                                                        const handleCliKeyboard = (e) => {
+                                                            const session = cliSessions[activeSessionId];
+                                                            const input = session.input;
+                                                            
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                
+                                                                // For interactive prompts (like authentication), allow empty input  
+                                                                if (session.authRequired || input.trim()) {
+                                                                    sendCliInput(activeSessionId, input);
+                                                                    
+                                                                    // Clear input after sending
+                                                                    setCliSessions(prev => ({
+                                                                        ...prev,
+                                                                        [activeSessionId]: {
+                                                                            ...prev[activeSessionId],
+                                                                            input: ''
+                                                                        }
+                                                                    }));
+                                                                }
+                                                            } else if (e.key === 'Escape') {
+                                                                e.preventDefault();
+                                                                // Send escape character to CLI
+                                                                sendCliInput(activeSessionId, '\x1b', 'command');
+                                                            } else if (e.key === 'Tab') {
+                                                                e.preventDefault();
+                                                                // Send tab character for completion
+                                                                sendCliInput(activeSessionId, '\t', 'command');
+                                                            } else if (e.key === 'ArrowUp') {
+                                                                e.preventDefault();
+                                                                // Send up arrow for history navigation
+                                                                sendCliInput(activeSessionId, '\x1b[A', 'command');
+                                                            } else if (e.key === 'ArrowDown') {
+                                                                e.preventDefault();
+                                                                // Send down arrow for history navigation
+                                                                sendCliInput(activeSessionId, '\x1b[B', 'command');
+                                                            } else if (e.key === 'ArrowLeft') {
+                                                                // Allow normal cursor movement in input field
+                                                                return;
+                                                            } else if (e.key === 'ArrowRight') {
+                                                                // Allow normal cursor movement in input field
+                                                                return;
+                                                            } else if (e.ctrlKey && e.key === 'c') {
+                                                                e.preventDefault();
+                                                                // Send interrupt signal (Ctrl+C)
+                                                                sendCliInput(activeSessionId, '\x03', 'command');
+                                                            } else if (e.ctrlKey && e.key === 'd') {
+                                                                e.preventDefault();
+                                                                // Send EOF signal (Ctrl+D)
+                                                                sendCliInput(activeSessionId, '\x04', 'command');
+                                                            } else if (e.ctrlKey && e.key === 'z') {
+                                                                e.preventDefault();
+                                                                // Send suspend signal (Ctrl+Z)
+                                                                sendCliInput(activeSessionId, '\x1a', 'command');
+                                                            }
+                                                        };
+                                                        
+                                                        handleCliKeyboard(e);
+                                                    }}
+                                                    placeholder={cliSessions[activeSessionId].authRequired ? 
+                                                        "Enter authentication details..." : 
+                                                        `Type commands for ${cliSessions[activeSessionId].cli_tool}...`}
+                                                    disabled={cliSessions[activeSessionId].connectionStatus !== 'connected'}
+                                                />
+                                                <div className="cli-input-actions">
+                                                    <button
+                                                        className="cli-input-action"
+                                                        onClick={() => {
+                                                            // Send cancel/interrupt message using the correct format
+                                                            sendCliInput(activeSessionId, '\x03', 'cancel');
+                                                        }}
+                                                        disabled={cliSessions[activeSessionId].connectionStatus !== 'connected'}
+                                                    >
+                                                        Ctrl+C
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </React.Fragment>
+                                    ) : (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '400px',
+                                            color: '#64748b',
+                                            textAlign: 'center',
+                                            background: '#0f1419',
+                                            border: '1px solid #334155',
+                                            borderRadius: '8px'
+                                        }}>
+                                            <div>
+                                                <div style={{fontSize: '3rem', marginBottom: '16px'}}>💻</div>
+                                                <div style={{fontSize: '1.25rem', marginBottom: '8px', color: '#94a3b8'}}>
+                                                    No CLI sessions active
+                                                </div>
+                                                <div style={{fontSize: '0.875rem', marginBottom: '16px', maxWidth: '300px'}}>
+                                                    Start a session to interact directly with {selectedModel} CLI tools or API
+                                                </div>
+                                                <div style={{
+                                                    background: '#1e293b', 
+                                                    padding: '12px', 
+                                                    borderRadius: '6px', 
+                                                    fontSize: '0.75rem',
+                                                    textAlign: 'left',
+                                                    maxWidth: '350px',
+                                                    margin: '0 auto'
+                                                }}>
+                                                    <div style={{color: '#10b981', marginBottom: '6px'}}>💡 Session Types:</div>
+                                                    <div>• <strong>New Session:</strong> Standard access, safe for exploration</div>
+                                                    <div>• <strong>Full Access:</strong> Unrestricted access (use with caution)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                    </div>
                 </div>
             );
         }
 
-        ReactDOM.render(<Dashboard />, document.getElementById('dashboard-root'));
+        class ErrorBoundary extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null };
+            }
+            static getDerivedStateFromError(error) {
+                return { hasError: true, error };
+            }
+            componentDidCatch(error, info) {
+                console.error('Dashboard ErrorBoundary caught:', error, info);
+            }
+            render() {
+                if (this.state.hasError) {
+                    return React.createElement('div', { style: { padding: '16px', color: '#ef4444' } },
+                        'Something went wrong in the dashboard. Check console for details.'
+                    );
+                }
+                return this.props.children;
+            }
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('dashboard-root'));
+        root.render(
+            <ErrorBoundary>
+                <Dashboard />
+            </ErrorBoundary>
+        );
     </script>
 </body>
 </html>

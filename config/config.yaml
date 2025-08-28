@@ -17,6 +17,7 @@ providers:
     - "cursor_cli"
     - "anthropic_api"
     - "openai_api"
+    - "gemini_api"
 
   # Full access mode providers (interactive/session mode)
   full_access_order:
@@ -27,49 +28,78 @@ providers:
 
   claude_cli:
     mode: "cli"
+    provider_type: "cli"
     binary: "claude"             # Anthropic Claude Code CLI. Non-interactive via -p.
     args: ["-p", "--output-format", "text"]  # or "json" if you prefer structured
     model: "sonnet"              # optional: e.g., "claude-sonnet-4-20250514"
+    available_models: ["default", "sonnet", "opus", "haiku"]
+    description: "Claude Code CLI - Local Claude tool with file system access"
 
   codex_cli:
     mode: "cli"
+    provider_type: "cli"
     binary: "codex"              # OpenAI Codex CLI (terminal agent). Non-interactive via 'exec'.
     args: ["exec"]               # will append the prompt at the end
     model: "o4-mini"             # CLI respects config; this is just a hint to include in prompts
+    available_models: ["default", "o4-mini", "o3", "gpt-5", "gpt-4.1"]
+    description: "Codex CLI - OpenAI terminal agent for code generation and execution"
 
   gemini_cli:
     mode: "cli"
+    provider_type: "cli"
     binary: "gemini"             # Google Gemini CLI. Non-interactive via -p
     args: ["-p"]                 # one-shot prompt mode
     model: "gemini-2.5-pro"      # or gemini-2.5-flash if you want speed
+    available_models: ["default", "gemini-2.5-pro", "gemini-2.5-flash"]
+    description: "Gemini CLI - Google's multimodal AI with fast execution"
 
   cursor_cli:
-    mode: "cli"
+    mode: "cli" 
+    provider_type: "cli"
     binary: "cursor-agent"       # Cursor CLI. Non-interactive via -p
     args: ["-p", "--output-format", "text"]
+    available_models: ["default"]
+    description: "Cursor CLI - AI code editor optimized for refactoring"
 
   anthropic_api:
     mode: "api"
-    model: "claude-3-5-sonnet-latest"
+    provider_type: "api"
+    model: "claude-opus-4-1-20250805"
+    available_models: ["claude-opus-4-1-20250805", "claude-sonnet-4", "claude-opus-4", "claude-3-5-sonnet-latest", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-latest", "claude-3-5-haiku-20241022"]
     max_tokens: 4096
+    description: "Anthropic API - Official Claude API with latest models including Opus 4.1 and Sonnet 4"
 
   openai_api:
     mode: "api"
-    model: "gpt-4o"
+    provider_type: "api"
+    model: "gpt-5"
+    available_models: ["gpt-5", "gpt-5-mini", "gpt-5-nano", "o3", "o4-mini", "gpt-4.1", "gpt-4o", "gpt-4o-mini"]
+    description: "OpenAI API - GPT models including GPT-5, o3, and o4-mini with reliable API access"
+
+  gemini_api:
+    mode: "api"
+    provider_type: "api"
+    model: "gemini-2.0-flash-exp"
+    available_models: ["gemini-2.0-flash-exp", "gemini-1.5-pro-latest", "gemini-1.5-pro", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.0-pro"]
+    description: "Google Gemini API - Multimodal AI with fast processing"
 
   # Interactive/Full Access Mode Providers
   claude_interactive:
     mode: "interactive"
+    provider_type: "cli"
     binary: "claude"
     args: ["--dangerously-skip-permissions"]  # Full access mode bypassing permissions
     model: "sonnet"
+    available_models: ["default", "sonnet", "opus", "haiku"]
     description: "Claude Code in full access mode with permissions bypassed"
 
   codex_interactive:
     mode: "interactive"
+    provider_type: "cli"
     binary: "codex"
     args: ["--ask-for-approval", "never", "--sandbox", "danger-full-access"]
     model: "o4-mini"
+    available_models: ["default", "o4-mini", "o3", "gpt-5", "gpt-4.1"]
     description: "Codex in full access mode with auto-approval and full sandbox access"
 
 # Full access mode configuration
