@@ -256,12 +256,12 @@ target_dir: "."
 
 ```bash
 # Submit infrastructure task
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H 'Content-Type: application/json' \
   -d @examples/infra-prod-task.yaml
 
 # Submit with explicit full access via API
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H 'Content-Type: application/json' \
   -d '{
     "id": "CUSTOM-FULL-ACCESS-001",
@@ -283,7 +283,7 @@ curl -X POST http://localhost:8000/tasks \
 
 ```bash
 # Check task status
-curl http://localhost:8000/tasks/INFRA-PROD-001
+curl http://localhost:8001/tasks/INFRA-PROD-001
 
 # Monitor git branches for full access tasks
 git branch -a | grep auto/ | grep -E "(infra|migration|optimization)"

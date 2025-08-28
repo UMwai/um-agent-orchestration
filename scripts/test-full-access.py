@@ -82,7 +82,7 @@ async def test_api_endpoints():
     """Test the orchestrator API endpoints"""
     print("🧪 Testing API Endpoints...")
     
-    base_url = "http://localhost:8000"
+    base_url = "http://localhost:8001"
     
     async with httpx.AsyncClient() as client:
         try:
@@ -215,7 +215,7 @@ async def main():
     print("📊 Next steps:")
     print("1. Start the orchestrator: make dev")
     print("2. Start Redis and workers: make run") 
-    print("3. Open dashboard: http://localhost:8000")
+    print("3. Open dashboard: http://localhost:8001")
     print("4. Submit tasks via API or dashboard UI")
     print("5. Monitor with: make monitoring (Prometheus + Grafana)")
 

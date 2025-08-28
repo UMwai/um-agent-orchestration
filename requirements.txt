@@ -1,0 +1,5 @@
+# Minimal dependencies for simplified orchestrator
+click>=8.0.0
+sqlite3-api>=0.1.0
+pyyaml>=6.0
+dataclasses-json>=0.5.0

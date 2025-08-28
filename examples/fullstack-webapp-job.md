@@ -24,7 +24,7 @@ cp .env.example .env
 ### 2. Start the Orchestrator System
 ```bash
 # Terminal 1: Start the FastAPI orchestrator server
-make dev  # Starts server at localhost:8000
+make dev  # Starts server at localhost:8001
 
 # Terminal 2: Start Redis and RQ worker
 make run
@@ -36,10 +36,10 @@ make workers
 ### 3. Verify System Health
 ```bash
 # Check orchestrator is running
-curl http://localhost:8000/docs
+curl http://localhost:8001/docs
 
 # Check metrics endpoint
-curl http://localhost:8000/metrics
+curl http://localhost:8001/metrics
 ```
 
 ## Sample Full Stack Web App Job
@@ -190,7 +190,7 @@ provider_override: "codex_interactive"
 ### Method 1: Using curl (REST API)
 ```bash
 # Submit frontend task
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "id": "WEBAPP-FRONTEND-001",
@@ -206,12 +206,12 @@ curl -X POST http://localhost:8000/tasks \
   }'
 
 # Submit backend task
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H "Content-Type: application/json" \
   -d @examples/backend-task.yaml
 
 # Submit data pipeline task  
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H "Content-Type: application/json" \
   -d @examples/data-task.yaml
 ```
@@ -226,7 +226,7 @@ with open('examples/frontend-task.yaml', 'r') as f:
     task_spec = yaml.safe_load(f)
 
 # Submit task
-response = requests.post('http://localhost:8000/tasks', json=task_spec)
+response = requests.post('http://localhost:8001/tasks', json=task_spec)
 result = response.json()
 
 print(f"Job ID: {result['job_id']}")
@@ -238,7 +238,7 @@ print(f"Task ID: {result['task_id']}")
 ### Check Task Status
 ```bash
 # Get task status by task ID
-curl http://localhost:8000/tasks/WEBAPP-FRONTEND-001
+curl http://localhost:8001/tasks/WEBAPP-FRONTEND-001
 
 # Example response:
 # {
@@ -265,7 +265,7 @@ ls -la worktrees/
 ### View System Metrics
 ```bash
 # Prometheus metrics endpoint
-curl http://localhost:8000/metrics
+curl http://localhost:8001/metrics
 
 # Start monitoring dashboard (if configured)
 make monitoring

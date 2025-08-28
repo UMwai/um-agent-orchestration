@@ -163,12 +163,12 @@ echo "   Terminal 1: make dev"
 echo "   Terminal 2: make run"
 echo
 echo "2. Test full access mode by submitting the test task:"
-echo "   curl -X POST http://localhost:8000/tasks \\"
+echo "   curl -X POST http://localhost:8001/tasks \\"
 echo "        -H 'Content-Type: application/json' \\"
 echo "        -d @$TEST_TASK_FILE"
 echo
 echo "3. Monitor the task execution:"
-echo "   curl http://localhost:8000/tasks/FULL-ACCESS-TEST-001"
+echo "   curl http://localhost:8001/tasks/FULL-ACCESS-TEST-001"
 echo
 echo "The selected provider ($PROVIDER) will be used with full access:"
 if [ "$SELECTED_CLI" = "claude" ]; then

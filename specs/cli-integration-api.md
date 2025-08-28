@@ -30,7 +30,7 @@ Create a new CLI session.
   "mode": "cli",
   "status": "initializing",
   "createdAt": "2024-01-15T09:30:00Z",
-  "websocketUrl": "ws://localhost:8000/ws/cli/550e8400-e29b-41d4-a716-446655440000"
+  "websocketUrl": "ws://localhost:8001/ws/cli/550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
@@ -291,7 +291,7 @@ Get overall CLI system status.
 
 **Connection URL:**
 ```
-ws://localhost:8000/ws/cli/550e8400-e29b-41d4-a716-446655440000?token=JWT_TOKEN
+ws://localhost:8001/ws/cli/550e8400-e29b-41d4-a716-446655440000?token=JWT_TOKEN
 ```
 
 **Connection Headers:**
@@ -574,7 +574,7 @@ X-RateLimit-Reset: 1705315200
 ```typescript
 // Initialize client
 const cliClient = new CLIClient({
-  baseUrl: 'http://localhost:8000',
+  baseUrl: 'http://localhost:8001',
   token: authToken
 });
 
@@ -602,7 +602,7 @@ await session.disconnect();
 ```python
 # Initialize client
 cli_client = CLIClient(
-    base_url='http://localhost:8000',
+    base_url='http://localhost:8001',
     token=auth_token
 )
 

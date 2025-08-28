@@ -455,7 +455,7 @@ export YOUR_PROVIDER_PROJECT_ID=your_project_id  # Optional
 
 ```bash
 # Create Your Provider CLI session
-curl -X POST http://localhost:8000/cli/sessions \
+curl -X POST http://localhost:8001/cli/sessions \
   -H "Content-Type: application/json" \
   -d '{
     "cli_tool": "your_provider",
@@ -754,7 +754,7 @@ class TestCLIWorkflow:
         session_id = session_data["session_id"]
         
         # Step 2: Connect via WebSocket
-        websocket_url = f"ws://localhost:8000/cli/session/{session_id}/ws?token={jwt_token}"
+        websocket_url = f"ws://localhost:8001/cli/session/{session_id}/ws?token={jwt_token}"
         
         async with websockets.connect(websocket_url) as websocket:
             # Step 3: Wait for connection confirmation
@@ -1407,7 +1407,7 @@ Content-Type: application/json
 {
   "session_id": "cli-sess-uuid-here",
   "status": "created",
-  "websocket_url": "ws://localhost:8000/cli/session/cli-sess-uuid-here/ws",
+  "websocket_url": "ws://localhost:8001/cli/session/cli-sess-uuid-here/ws",
   "created_at": "2025-08-27T12:00:00.000Z"
 }
 ```
@@ -1465,7 +1465,7 @@ GET /cli/sessions/{session_id}/diagnostics
 
 **Connect to Session**
 ```
-ws://localhost:8000/cli/session/{session_id}/ws?token={jwt_token}
+ws://localhost:8001/cli/session/{session_id}/ws?token={jwt_token}
 ```
 
 #### Message Format

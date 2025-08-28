@@ -85,7 +85,7 @@ redis-server &
 make dev
 
 # Or start manually:
-uvicorn orchestrator.app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn orchestrator.app:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 #### Step 4: Verify System Status
@@ -94,13 +94,13 @@ Check that all components are working:
 
 ```bash
 # Check system status
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Verify CLI provider status  
-curl http://localhost:8000/providers
+curl http://localhost:8001/providers
 
 # Check WebSocket endpoint
-curl http://localhost:8000/metrics
+curl http://localhost:8001/metrics
 ```
 
 ## Authentication and Security
@@ -136,7 +136,7 @@ print(f"Your JWT token: {token}")
 // JavaScript example for WebSocket connection with JWT
 const token = "your_jwt_token_here";
 const sessionId = "your_session_id";
-const wsUrl = `ws://localhost:8000/cli/session/${sessionId}/ws?token=${token}`;
+const wsUrl = `ws://localhost:8001/cli/session/${sessionId}/ws?token=${token}`;
 
 const websocket = new WebSocket(wsUrl);
 
@@ -168,7 +168,7 @@ Create a new CLI session via HTTP POST:
 
 ```bash
 # Create a Claude CLI session
-curl -X POST http://localhost:8000/cli/sessions \
+curl -X POST http://localhost:8001/cli/sessions \
   -H "Content-Type: application/json" \
   -d '{
     "cli_tool": "claude",
@@ -181,7 +181,7 @@ curl -X POST http://localhost:8000/cli/sessions \
 {
   "session_id": "cli-session-uuid-here",
   "status": "created",
-  "websocket_url": "ws://localhost:8000/cli/session/cli-session-uuid-here/ws"
+  "websocket_url": "ws://localhost:8001/cli/session/cli-session-uuid-here/ws"
 }
 ```
 
@@ -190,7 +190,7 @@ curl -X POST http://localhost:8000/cli/sessions \
 Create a CLI session automatically when submitting a task:
 
 ```bash
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "id": "my-task-123",
@@ -219,7 +219,7 @@ class CLISessionClient {
     }
     
     connect() {
-        const wsUrl = `ws://localhost:8000/cli/session/${this.sessionId}/ws?token=${this.token}`;
+        const wsUrl = `ws://localhost:8001/cli/session/${this.sessionId}/ws?token=${this.token}`;
         this.websocket = new WebSocket(wsUrl);
         
         this.websocket.onopen = (event) => {
@@ -480,7 +480,7 @@ CLI sessions can be associated with specific tasks for better organization:
 
 ```bash
 # Create task with CLI session
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8001/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "id": "feature-auth-123",
@@ -503,13 +503,13 @@ Track task progress through CLI sessions:
 
 ```bash
 # Get task status
-curl http://localhost:8000/tasks/feature-auth-123
+curl http://localhost:8001/tasks/feature-auth-123
 
 # Get CLI session associated with task
-curl http://localhost:8000/cli/sessions/by-task/feature-auth-123
+curl http://localhost:8001/cli/sessions/by-task/feature-auth-123
 
 # Get session history
-curl http://localhost:8000/cli/sessions/cli-session-123/history
+curl http://localhost:8001/cli/sessions/cli-session-123/history
 ```
 
 ### CLI Session Recovery
@@ -518,10 +518,10 @@ The system automatically recovers CLI sessions after restarts:
 
 ```bash
 # Check recovered sessions after system restart
-curl http://localhost:8000/cli/sessions/recovery/status
+curl http://localhost:8001/cli/sessions/recovery/status
 
 # Get list of recovered sessions
-curl http://localhost:8000/cli/sessions?status=recovered
+curl http://localhost:8001/cli/sessions?status=recovered
 ```
 
 ## Troubleshooting
@@ -540,11 +540,11 @@ curl http://localhost:8000/cli/sessions?status=recovered
 
 ```bash
 # Test WebSocket endpoint accessibility
-curl -I http://localhost:8000/cli/session/test/ws
+curl -I http://localhost:8001/cli/session/test/ws
 # Should return: 426 Upgrade Required (expected for WebSocket endpoint)
 
 # Check if session exists  
-curl http://localhost:8000/cli/sessions/your-session-id
+curl http://localhost:8001/cli/sessions/your-session-id
 ```
 
 #### 2. CLI Authentication Issues
@@ -608,7 +608,7 @@ top -p $(pgrep -f autodev)
 redis-cli --latency-history -h localhost -p 6379
 
 # Monitor WebSocket connections
-curl http://localhost:8000/metrics | grep websocket
+curl http://localhost:8001/metrics | grep websocket
 ```
 
 ### Debugging CLI Sessions
@@ -629,13 +629,13 @@ make dev
 
 ```bash
 # Get detailed session information
-curl http://localhost:8000/cli/sessions/your-session-id/diagnostics
+curl http://localhost:8001/cli/sessions/your-session-id/diagnostics
 
 # Get session command history
-curl http://localhost:8000/cli/sessions/your-session-id/history
+curl http://localhost:8001/cli/sessions/your-session-id/history
 
 # Check session process status
-curl http://localhost:8000/cli/sessions/your-session-id/process
+curl http://localhost:8001/cli/sessions/your-session-id/process
 ```
 
 #### WebSocket Message Debugging
@@ -781,7 +781,7 @@ Monitor and optimize memory usage:
 ps aux | grep autodev | awk '{print $4, $11}' | sort -nr
 
 # Check CLI session memory usage
-curl http://localhost:8000/metrics | grep memory
+curl http://localhost:8001/metrics | grep memory
 
 # Configure memory limits
 export CLI_MAX_MEMORY_MB=512
@@ -823,9 +823,9 @@ ss -tuln | grep :8000
 
 ```bash
 # Create multiple sessions with different providers
-curl -X POST http://localhost:8000/cli/sessions -d '{"cli_tool": "claude", "mode": "interactive"}'
-curl -X POST http://localhost:8000/cli/sessions -d '{"cli_tool": "codex", "mode": "interactive"}'
-curl -X POST http://localhost:8000/cli/sessions -d '{"cli_tool": "gemini", "mode": "interactive"}'
+curl -X POST http://localhost:8001/cli/sessions -d '{"cli_tool": "claude", "mode": "interactive"}'
+curl -X POST http://localhost:8001/cli/sessions -d '{"cli_tool": "codex", "mode": "interactive"}'
+curl -X POST http://localhost:8001/cli/sessions -d '{"cli_tool": "gemini", "mode": "interactive"}'
 ```
 
 ### Q: How do I handle long-running CLI operations?

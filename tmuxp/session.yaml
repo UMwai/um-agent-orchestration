@@ -4,7 +4,7 @@ windows:
   - window_name: orchestrator
     panes:
       - shell_command:
-          - uvicorn orchestrator.app:app --reload --host 0.0.0.0 --port 8000
+          - uvicorn orchestrator.app:app --reload --host 0.0.0.0 --port 8001
   - window_name: redis
     panes:
       - shell_command:
