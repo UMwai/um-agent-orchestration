@@ -2,141 +2,121 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## NEW SIMPLIFIED SYSTEM (Current)
+## Project Overview
 
-### Quick Start
-```bash
-# Install minimal dependencies
-pip install click pyyaml
+Agent Orchestrator - A lightweight system for managing multiple specialized AI agents working in parallel. Submit high-level tasks that get automatically decomposed and distributed to appropriate specialists for 23x/7 autonomous development.
 
-# Method 1: Submit individual tasks manually
-./orchestrate submit "Fix authentication bug" --agent claude --priority high
-./orchestrate submit "Update UI components" --agent codex --priority normal
-
-# Method 2: Submit high-level task with automatic decomposition (RECOMMENDED)
-./orchestrate submit "Build a todo app with authentication" --decompose
-
-# Run the orchestrator (spawns multiple agents)
-./orchestrate run --max-agents 3
-
-# Check status
-./orchestrate status
-
-# View specific task
-./orchestrate task <task-id>
-
-# Run demo
-./orchestrate demo
-```
-
-### Architecture Overview
-
-**Simplified Agent Orchestrator** - A lightweight system for managing multiple CLI agents:
-
-- **TaskQueue** (`src/core/task_queue.py`): SQLite-based task management
-- **AgentSpawner** (`src/core/agent_spawner.py`): Direct subprocess spawning
-- **ContextManager** (`src/core/context_manager.py`): File-based context sharing
-- **TaskDecomposer** (`src/core/task_decomposer.py`): Intelligent task breakdown using Claude
-- **CLI Interface** (`src/cli/orchestrate.py`): Simple command-line interface with `--decompose` flag
-
-### Key Design Principles
-- **Simplicity First**: ~500 lines of code total
-- **No External Services**: SQLite only, no Redis/RQ/monitoring stack
-- **Direct CLI Execution**: Spawns `claude` and `codex` as subprocesses
-- **File-Based IPC**: Context sharing via `/tmp/agent_orchestrator/`
-- **CLI-Only Interface**: No web UI by design
-
-### How It Works
-1. Submit tasks via `./orchestrate submit`
-2. Tasks stored in SQLite database
-3. Run orchestrator with `./orchestrate run`
-4. Orchestrator spawns claude/codex CLI processes
-5. Agents work on tasks in parallel
-6. Results saved to filesystem
-7. Context shared between agents via files
-
-### Development Commands
+## Launch Commands
 
 ```bash
-# Core operations
-./orchestrate submit "task description"  # Add task
-./orchestrate run                       # Process tasks
-./orchestrate status                    # View queue
-./orchestrate agents                    # List active agents
-./orchestrate kill <agent-id>          # Kill stuck agent
-./orchestrate cleanup                   # Clean old data
+# One-command setup and launch (first time)
+./quickstart.sh
 
-# Testing
-python src/core/task_queue.py          # Test task queue
-python src/core/agent_spawner.py       # Test agent spawning
-python src/core/context_manager.py     # Test context sharing
+# Quick launcher with interactive menu
+./run.sh
+
+# Direct commands after setup
+./orchestrate plan "Build a REST API"              # Interactive planning
+./orchestrate submit "Task description" --decompose # Submit with decomposition  
+./orchestrate run --max-agents 3                   # Process tasks
+./orchestrate status                                # Check progress
 ```
 
-### Multi-Agent Patterns
+## Core Commands
+
+### Planning Commands (Interactive Mode)
+```bash
+./orchestrate plan <goal>                  # Start interactive planning session
+./orchestrate plan-list                    # View all planning sessions
+./orchestrate plan-continue <session-id>   # Resume a planning session
+./orchestrate execute-plan <session-id>    # Execute approved plan
+```
+
+### Task Management Commands
+```bash
+./orchestrate submit <task> [options]      # Submit task
+  --decompose/-d                           # Auto-decompose into subtasks
+  --agent <type>                           # Specify agent type
+  --priority high/normal/low               # Set priority
+  
+./orchestrate run [options]                # Process tasks
+  --max-agents N                           # Concurrent agents (default 3)
+  
+./orchestrate status                       # View queue and agents
+./orchestrate task <task-id>              # View specific task
+./orchestrate agents                       # List active agents
+./orchestrate kill <agent-id>             # Kill stuck agent
+./orchestrate cleanup                      # Clean old data
+./orchestrate demo                         # Run demo tasks
+```
+
+## Core Architecture
+
+The system consists of ~500 lines of Python code:
+
+- **TaskQueue** (`src/core/task_queue.py`): SQLite-based task management with priority queuing
+- **AgentSpawner** (`src/core/agent_spawner.py`): Manages Claude CLI subprocesses or API calls
+- **TaskDecomposer** (`src/core/task_decomposer.py`): Breaks high-level tasks into specialized subtasks
+- **InteractivePlanner** (`src/core/interactive_planner.py`): Head node for interactive planning sessions
+- **ContextManager** (`src/core/context_manager.py`): File-based IPC in `/tmp/agent_orchestrator/`
+- **CLI Interface** (`src/cli/orchestrate.py`): Click-based commands
+
+## Available Specialized Agents
+
+- `backend-systems-engineer`: APIs, microservices, databases
+- `frontend-ui-engineer`: React/Vue/Svelte, UI/UX
+- `data-pipeline-engineer`: ETL/ELT, Spark, Airflow
+- `aws-cloud-architect`: AWS infrastructure, IaC
+- `ml-systems-architect`: ML pipelines, MLOps
+- `data-science-analyst`: Data analysis, ML models
+- `data-architect-governance`: Data models, governance
+- `project-delivery-manager`: Sprint planning, coordination
+- `llm-architect`: LLM systems, RAG, prompting
+- `specifications-engineer`: Requirements analysis
+
+## Configuration (.env)
 
 ```bash
-# Parallel task execution
-./orchestrate submit "Backend: Fix auth" --agent claude
-./orchestrate submit "Frontend: Update UI" --agent codex
-./orchestrate submit "Tests: Add coverage" --agent any
-./orchestrate run --max-agents 3
-
-# Monitor progress
-watch -n 2 ./orchestrate status
+ANTHROPIC_API_KEY=your-api-key          # Required for API mode
+USE_API_MODE=true                       # true for API, false for CLI
+MAX_AGENTS=3                           # Default concurrent agents
+ORCHESTRATOR_BASE_DIR=/tmp/agent_orchestrator  # Working directory
 ```
 
-### Full Access Mode Testing
+## Testing Components
 
 ```bash
-# Test Claude capabilities
-claude --dangerously-skip-permissions -p "Analyze this repository"
+# Test individual modules
+python src/core/task_queue.py
+python src/core/agent_spawner.py
+python src/core/context_manager.py
+python src/core/task_decomposer.py
+python src/core/interactive_planner.py
 
-# Test Codex capabilities  
-codex --ask-for-approval never --sandbox danger-full-access exec "Review code"
+# Integration tests
+python scripts/test-full-access.py
+python test_interactive_planning.py
 ```
 
-## ARCHIVED SYSTEM (Old - Reference Only)
+## Development Workflows
 
-The previous overcomplicated system has been moved to `archive/current_implementation_2025_01_28/`. It included:
+### Interactive Planning Mode (Recommended)
+1. Start planning: `./orchestrate plan "Your goal"`
+2. In session: discuss (d), add tasks (a), modify (m), split (s)
+3. Approve plan (p) when ready
+4. Execute: automatically starts after approval
 
-- FastAPI server with Redis queues
-- Complex provider routing (8 providers)
-- Git worktrees and auto-rebase
-- React web dashboard
-- Prometheus/Grafana monitoring
-- Systemd timers
-- ~5000 lines of code
+### Direct Submission Mode
+1. Submit with decomposition: `./orchestrate submit "Task" --decompose`
+2. Run orchestrator: `./orchestrate run`
+3. Monitor: `./orchestrate status`
 
-**DO NOT USE THE ARCHIVED SYSTEM** - it has been replaced with the simplified version above.
-
-## File Structure
-
-```
-/home/umwai/um-agent-orchestration/
-├── orchestrate              # Main CLI entry point
-├── src/
-│   ├── core/               # Core components (500 lines total)
-│   │   ├── task_queue.py   # SQLite task queue
-│   │   ├── agent_spawner.py # Subprocess management
-│   │   └── context_manager.py # File-based context
-│   └── cli/
-│       └── orchestrate.py  # CLI commands
-├── archive/                 # Old overcomplicated system
-├── tasks.db                # SQLite database (auto-created)
-└── README.md               # User documentation
-```
+### Working Directory
+Agents operate in the current directory where you run the orchestrator with full read/write access.
 
 ## Important Notes
 
-- **Simplicity is key**: Resist adding complexity
-- **No external services**: SQLite only, no Redis/databases
-- **Direct CLI execution**: No session management or PTY complexity
-- **File-based IPC**: Simple and reliable
-- **CLI-first**: No web UI needed
-
-When working on this codebase:
-1. Keep the implementation under 1000 lines total
-2. Use only Python standard library + Click
-3. Avoid adding new dependencies
-4. Prefer simple solutions over clever ones
-5. Test with real claude/codex CLI tools
+- Keep implementation under 1000 lines total
+- SQLite only, no external databases
+- File-based IPC via `/tmp/agent_orchestrator/`
+- Archive at `archive/current_implementation_2025_01_28/` contains old complex system - do not use

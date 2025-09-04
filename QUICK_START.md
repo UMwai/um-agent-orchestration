@@ -1,184 +1,185 @@
 # Quick Start Guide
 
-Get up and running with the Simplified Agent Orchestrator in 2 minutes.
+Get up and running with the Agent Orchestrator in under 2 minutes.
 
-## Prerequisites
-
-- Python 3.8+
-- `claude` CLI tool installed
-- `codex` CLI tool installed
-
-## Installation
+## One-Command Launch
 
 ```bash
-# Clone the repo (if needed)
-git clone <your-repo-url>
-cd um-agent-orchestration
-
-# Install minimal dependencies
-pip install click pyyaml
-
-# Make the orchestrator executable
-chmod +x orchestrate
+# Complete setup and launch (first time)
+./quickstart.sh
 ```
 
-## Basic Usage
+**What this does:**
+- ✅ Checks Python 3.8+ requirement  
+- ✅ Creates virtual environment
+- ✅ Installs all dependencies
+- ✅ Configures .env with API key
+- ✅ Shows interactive launch options
+- ✅ Optional demo to try the system
 
-### 1. Submit Tasks
+## Launch Options
 
-#### Option A: Submit Individual Tasks
+After setup, you'll see these options:
+
+### 1. Interactive Planning (Recommended)
 ```bash
-# Submit a high-priority task for Claude
-./orchestrate submit "Fix the authentication bug in login.py" --agent claude --priority high
-
-# Submit a task for Codex
-./orchestrate submit "Update the React components to use hooks" --agent codex
-
-# Submit a task for any available agent
-./orchestrate submit "Write unit tests for the API endpoints" --agent any
+./orchestrate plan "Build a REST API with authentication"
 ```
+Start a collaborative planning session with Claude to:
+- Discuss approach and requirements
+- Break down tasks into phases
+- Approve the plan before execution
+- Automatically execute approved tasks
 
-#### Option B: Submit High-Level Task with Auto-Decomposition (NEW!)
-```bash
-# Let the system break down complex tasks automatically
-./orchestrate submit "Build a REST API for user management" --decompose
-
-# This will create subtasks like:
-# - Design API endpoints and data structures (claude)
-# - Implement API handlers (codex)
-# - Add authentication/authorization (codex)
-# - Write API tests (codex)
-```
-
-### 2. Process Tasks
-
-```bash
-# Run the orchestrator with up to 3 parallel agents
-./orchestrate run --max-agents 3
-```
-
-The orchestrator will:
-- Spawn claude/codex CLI processes
-- Assign tasks to appropriate agents
-- Run agents in parallel
-- Save results to `/tmp/agent_orchestrator/`
-
-### 3. Monitor Progress
-
-```bash
-# Check overall status
-./orchestrate status
-
-# View specific task details
-./orchestrate task <task-id>
-
-# List active agents
-./orchestrate agents
-```
-
-## Example Workflows
-
-### Workflow 1: Manual Task Management
-```bash
-# Submit individual subtasks
-./orchestrate submit "Backend: Fix user authentication" --agent claude --priority high
-./orchestrate submit "Frontend: Add dark mode toggle" --agent codex --priority normal
-./orchestrate submit "Tests: Add integration tests" --agent any --priority low
-
-# Check queue and run
-./orchestrate status
-./orchestrate run --max-agents 2
-```
-
-### Workflow 2: Automatic Decomposition (Recommended)
-```bash
-# Step 1: Submit high-level task
-./orchestrate submit "Build a blog platform with comments and user accounts" --decompose
-
-# Step 2: System automatically creates subtasks:
-# ✅ Design the data model and architecture (claude)
-# ✅ Implement the backend/API (codex)
-# ✅ Create the frontend/UI (codex)
-# ✅ Write tests (codex)
-# ✅ Create documentation (claude)
-
-# Step 3: Run orchestrator with multiple agents
-./orchestrate run --max-agents 3
-
-# Step 4: Monitor in another terminal
-watch -n 2 ./orchestrate status
-```
-
-## Demo Mode
-
-Try the system with built-in demo tasks:
-
+### 2. Quick Demo
 ```bash
 ./orchestrate demo
 ```
+Try the system with sample tasks to see how it works.
 
-This will:
-1. Submit 3 sample tasks
-2. Process them with 2 agents
-3. Show the results
+### 3. Direct Task Submission
+```bash
+# Submit with automatic decomposition
+./orchestrate submit "Create a blog platform" --decompose
+./orchestrate run --max-agents 3
+
+# Check progress
+./orchestrate status
+```
+
+### 4. Interactive Menu
+```bash
+# Run without arguments for menu
+./run.sh
+```
+Shows an interactive menu with options to plan, submit, run, or check status.
+
+## Key Features
+
+### Specialized Agents
+The system routes tasks to appropriate specialists:
+- `backend-systems-engineer`: APIs, databases, microservices
+- `frontend-ui-engineer`: React/Vue/Svelte, UI components  
+- `data-pipeline-engineer`: ETL/ELT, data processing
+- `aws-cloud-architect`: Infrastructure, deployment
+- `ml-systems-architect`: ML pipelines, MLOps
+- And more...
+
+### Parallel Processing
+- Run multiple agents simultaneously (default: 3, configurable up to 10+)
+- Agents share context for coordinated development
+- Automatic load balancing and task routing
+
+## Example Workflows
+
+### Overnight Development Workflow
+```bash
+# Evening: Start planning session
+./orchestrate plan "Build a complete e-commerce platform"
+
+# During planning session:
+# [d] Discuss approach with Claude
+# [a] Add specific requirements  
+# [m] Modify task breakdown
+# [p] Proceed to approval and execution
+
+# Morning: Review completed work
+./orchestrate status
+```
+
+### Quick Task Workflow  
+```bash
+# Submit and run immediately
+./run.sh submit "Add user authentication" --decompose
+./run.sh run --max-agents 5
+
+# Monitor progress
+watch -n 5 './run.sh status'
+```
+
+## Commands Reference
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `plan <goal>` | Interactive planning session | `./orchestrate plan "Build API"` |
+| `submit <task>` | Add task to queue | `./orchestrate submit "Fix bug" --decompose` |
+| `run` | Process queued tasks | `./orchestrate run --max-agents 3` |
+| `status` | Show queue & agent status | `./orchestrate status` |
+| `task <id>` | View task details | `./orchestrate task abc123` |
+| `agents` | List active agents | `./orchestrate agents` |
+| `kill <id>` | Terminate agent | `./orchestrate kill agent-123` |
+| `cleanup` | Remove old data | `./orchestrate cleanup` |
+| `demo` | Run demo tasks | `./orchestrate demo` |
+
+## Planning Session Commands
+
+During interactive planning (`./orchestrate plan "goal"`):
+
+| Command | Description |
+|---------|-------------|
+| `[d]` | Discuss approach with Claude |
+| `[a]` | Add new tasks |
+| `[r]` | Remove tasks |  
+| `[m]` | Modify existing tasks |
+| `[s]` | Split complex tasks |
+| `[p]` | Proceed to approval/execution |
+
+## Configuration
+
+The system uses `.env` for configuration:
+
+```bash
+ANTHROPIC_API_KEY=your-api-key          # Required for API mode
+USE_API_MODE=true                       # Recommended: true  
+MAX_AGENTS=3                           # Concurrent agents
+ORCHESTRATOR_BASE_DIR=/tmp/agent_orchestrator
+```
 
 ## Troubleshooting
 
-### Agent Not Found
-If you get "claude: command not found":
+### Setup Issues
 ```bash
-# Make sure claude CLI is installed
-which claude
+# If quickstart.sh fails, check Python version
+python3 --version  # Should be 3.8+
 
-# If not installed, install it:
-# Follow instructions at https://claude.ai/code
+# Manual setup
+python3 -m venv venv_orchestrator
+source venv_orchestrator/bin/activate
+pip install click pyyaml anthropic python-dotenv
+chmod +x orchestrate
 ```
 
-### Task Stuck
-If a task is stuck:
+### API Key Issues
 ```bash
-# List agents
+# Edit configuration
+nano .env  # Update ANTHROPIC_API_KEY
+
+# Or run setup again
+./quickstart.sh
+```
+
+### Agent Issues
+```bash
+# Check running agents
 ./orchestrate agents
 
 # Kill stuck agent
 ./orchestrate kill <agent-id>
-```
 
-### Clean Up
-Remove old tasks and temporary files:
-```bash
+# Clean up old data
 ./orchestrate cleanup
 ```
 
-## CLI Commands Reference
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| `submit` | Add task to queue | `./orchestrate submit "Fix bug" --agent claude` |
-| `run` | Process queued tasks | `./orchestrate run --max-agents 3` |
-| `status` | Show queue status | `./orchestrate status` |
-| `task` | View task details | `./orchestrate task abc123` |
-| `agents` | List active agents | `./orchestrate agents` |
-| `kill` | Terminate agent | `./orchestrate kill claude-abc123` |
-| `cleanup` | Remove old data | `./orchestrate cleanup` |
-| `demo` | Run demo tasks | `./orchestrate demo` |
-
 ## How It Works
 
-1. **Task Queue**: Tasks stored in SQLite (`tasks.db`)
-2. **Agent Spawning**: Direct subprocess execution of CLI tools
-3. **Context Sharing**: Files in `/tmp/agent_orchestrator/`
-4. **No External Services**: No Redis, no web server, just Python
+1. **SQLite Task Queue**: Simple, file-based task storage
+2. **Agent Spawning**: Direct subprocess execution of Claude CLI or API calls
+3. **File-based Context**: Agents share context via `/tmp/agent_orchestrator/`
+4. **No External Dependencies**: No Redis, no databases, just Python + SQLite
 
 ## Next Steps
 
-- Read the [README](README.md) for detailed documentation
+- Try the interactive planning: `./orchestrate plan "Your goal"`
+- Explore examples: `cat examples/overnight_development.sh`
+- Read the full [README](README.md) for detailed architecture
 - Check [CLAUDE.md](CLAUDE.md) for development guidelines
-- Explore the source code in `src/core/`
-
-## Support
-
-For issues or questions:
-1. Check the README
-2. Run `./orchestrate --help`
-3. Review the source code (it's only ~500 lines!)
