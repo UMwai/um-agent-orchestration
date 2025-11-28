@@ -3,18 +3,26 @@ Task Decomposer - Breaks high-level tasks into subtasks
 Uses an LLM to intelligently decompose tasks
 """
 
-import json
-import subprocess
 from typing import List
 from dataclasses import dataclass
+
+from .agent_types import AgentType, AgentCapabilities
+from .exceptions import validate_not_empty, safe_execute
+from .claude_cli_manager import get_claude_manager
 
 
 @dataclass
 class Subtask:
     description: str
-    agent_type: str  # 'claude' or 'codex'
+    agent_type: str  # Agent type: claude, codex, or specialized agents
     dependencies: List[str] = None
     context_needed: List[str] = None
+
+    def __post_init__(self):
+        if self.dependencies is None:
+            self.dependencies = []
+        if self.context_needed is None:
+            self.context_needed = []
 
 
 class TaskDecomposer:
@@ -26,114 +34,118 @@ class TaskDecomposer:
         """
         Use Claude to decompose a high-level task into subtasks
         """
-        prompt = f"""Break down this task into {max_subtasks} or fewer specific subtasks.
-        
-Task: {task_description}
+        task_description = validate_not_empty(task_description, "task description")
 
-For each subtask, specify:
-1. A clear, actionable description
-2. Which agent type is best suited (claude for analysis/design, codex for implementation)
-3. Any dependencies on other subtasks
-4. What context it needs from other subtasks
+        prompt = self._build_decomposition_prompt(task_description, max_subtasks)
 
-Return as JSON array with format:
-[
-  {{
-    "description": "Specific actionable task",
-    "agent_type": "claude|codex",
-    "dependencies": ["subtask_1", "subtask_2"],
-    "context_needed": ["database_schema", "api_design"]
-  }}
-]
-
-Focus on practical implementation steps. Be specific and actionable."""
-
-        # Use Claude to decompose the task
+        # Try LLM decomposition first
         result = self._call_claude(prompt)
 
-        try:
-            subtasks_data = json.loads(result)
-            return [
-                Subtask(
-                    description=st["description"],
-                    agent_type=st.get("agent_type", "any"),
-                    dependencies=st.get("dependencies", []),
-                    context_needed=st.get("context_needed", []),
-                )
-                for st in subtasks_data
-            ]
-        except (json.JSONDecodeError, KeyError):
-            # Fallback to simple decomposition
-            return self._simple_decompose(task_description)
+        llm_subtasks = safe_execute(
+            lambda: self._parse_llm_response(result), default=None
+        )
+
+        # Fallback to heuristic decomposition if LLM fails
+        return llm_subtasks or self._heuristic_decompose(task_description)
+
+    def _build_decomposition_prompt(
+        self, task_description: str, max_subtasks: int
+    ) -> str:
+        """Build the prompt for task decomposition"""
+        agent_types = [t.value for t in AgentType]
+        claude_manager = get_claude_manager()
+        return claude_manager.create_decomposition_prompt(
+            task_description, max_subtasks, agent_types
+        )
 
     def _call_claude(self, prompt: str) -> str:
         """Call Claude CLI to decompose the task"""
-        try:
-            result = subprocess.run(
-                ["claude", "--dangerously-skip-permissions", "-p", prompt],
-                capture_output=True,
-                text=True,
-                timeout=30,
+        claude_manager = get_claude_manager()
+        response = claude_manager.call_claude(prompt)
+        return response.content if response.success else "[]"
+
+    def _parse_llm_response(self, response: str) -> List[Subtask]:
+        """Parse LLM response into Subtask objects"""
+        from .claude_cli_manager import ClaudeResponse
+
+        claude_manager = get_claude_manager()
+        mock_response = ClaudeResponse(success=True, content=response)
+        subtasks_data = claude_manager.parse_json_response(mock_response)
+
+        if not subtasks_data:
+            return []
+
+        return [
+            Subtask(
+                description=st["description"],
+                agent_type=st.get("agent_type", "claude"),
+                dependencies=st.get("dependencies", []),
+                context_needed=st.get("context_needed", []),
             )
-            if result.returncode == 0:
-                return result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
+            for st in subtasks_data
+        ]
 
-        # Fallback response
-        return "[]"
-
-    def _simple_decompose(self, task_description: str) -> List[Subtask]:
+    def _heuristic_decompose(self, task_description: str) -> List[Subtask]:
         """Simple heuristic-based task decomposition"""
-        subtasks = []
-
+        recommended_agent = AgentCapabilities.recommend_agent(task_description)
         task_lower = task_description.lower()
 
-        # Common patterns
-        if "build" in task_lower or "create" in task_lower:
-            if "app" in task_lower or "application" in task_lower:
-                subtasks = [
-                    Subtask("Design the data model and architecture", "claude"),
-                    Subtask("Implement the backend/API", "codex"),
-                    Subtask("Create the frontend/UI", "codex"),
-                    Subtask("Write tests", "codex"),
-                    Subtask("Create documentation", "claude"),
-                ]
-            elif "api" in task_lower:
-                subtasks = [
-                    Subtask("Design API endpoints and data structures", "claude"),
-                    Subtask("Implement API handlers", "codex"),
-                    Subtask("Add authentication/authorization", "codex"),
-                    Subtask("Write API tests", "codex"),
-                ]
-            elif "website" in task_lower or "page" in task_lower:
-                subtasks = [
-                    Subtask("Create HTML structure", "codex"),
-                    Subtask("Style with CSS", "codex"),
-                    Subtask("Add JavaScript functionality", "codex"),
-                ]
-        elif "fix" in task_lower or "debug" in task_lower:
-            subtasks = [
-                Subtask("Analyze and identify the issue", "claude"),
-                Subtask("Implement the fix", "codex"),
-                Subtask("Test the fix", "codex"),
-            ]
-        elif "refactor" in task_lower:
-            subtasks = [
-                Subtask("Analyze current code structure", "claude"),
-                Subtask("Plan refactoring approach", "claude"),
-                Subtask("Implement refactoring", "codex"),
-                Subtask("Update tests", "codex"),
-            ]
+        # Use predefined templates for common patterns
+        templates = {
+            "app_build": [
+                (
+                    "Gather requirements and create specifications",
+                    "specifications-engineer",
+                ),
+                ("Design architecture and data model", "data-architect-governance"),
+                ("Implement backend/API", "backend-systems-engineer"),
+                ("Create frontend/UI", "frontend-ui-engineer"),
+                ("Write tests and documentation", recommended_agent.value),
+            ],
+            "api_build": [
+                ("Design API endpoints", "specifications-engineer"),
+                ("Implement API handlers", "backend-systems-engineer"),
+                ("Add authentication", "backend-systems-engineer"),
+                ("Write API tests", "backend-systems-engineer"),
+            ],
+            "data_pipeline": [
+                ("Design pipeline architecture", "data-architect-governance"),
+                ("Implement data ingestion", "data-pipeline-engineer"),
+                ("Build transformation logic", "data-pipeline-engineer"),
+                ("Set up monitoring", "data-pipeline-engineer"),
+            ],
+            "ml_project": [
+                ("Design ML architecture", "ml-systems-architect"),
+                ("Prepare and analyze data", "data-science-analyst"),
+                ("Train models", "data-science-analyst"),
+                ("Deploy pipeline", "ml-systems-architect"),
+            ],
+        }
+
+        # Select template based on keywords
+        if (
+            any(k in task_lower for k in ["app", "application"])
+            and "build" in task_lower
+        ):
+            template_key = "app_build"
+        elif "api" in task_lower and "build" in task_lower:
+            template_key = "api_build"
+        elif any(k in task_lower for k in ["pipeline", "etl"]):
+            template_key = "data_pipeline"
+        elif any(k in task_lower for k in ["ml", "machine learning"]):
+            template_key = "ml_project"
         else:
-            # Generic decomposition
-            subtasks = [
-                Subtask(f"Analyze requirements for: {task_description}", "claude"),
-                Subtask(f"Implement: {task_description}", "codex"),
-                Subtask(f"Test and validate: {task_description}", "codex"),
+            # Generic template
+            return [
+                Subtask(f"Analyze: {task_description}", "specifications-engineer"),
+                Subtask(f"Implement: {task_description}", recommended_agent.value),
+                Subtask(
+                    f"Test and validate: {task_description}", recommended_agent.value
+                ),
             ]
 
-        return subtasks
+        template = templates[template_key]
+        return [Subtask(desc, agent_type) for desc, agent_type in template]
 
     def create_execution_plan(self, subtasks: List[Subtask]) -> List[List[Subtask]]:
         """

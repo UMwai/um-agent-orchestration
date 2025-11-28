@@ -102,7 +102,10 @@ def mock_persistence_manager():
     mock_manager.get_session.return_value = None
     mock_manager.list_sessions.return_value = []
     mock_manager.get_session_history.return_value = []
-    mock_manager.get_session_metrics.return_value = {"total_sessions": 0, "active_sessions": 0}
+    mock_manager.get_session_metrics.return_value = {
+        "total_sessions": 0,
+        "active_sessions": 0,
+    }
 
     return mock_manager
 
@@ -224,12 +227,20 @@ def cleanup_globals():
     """Clean up global state after each test."""
     yield
 
-    # Reset global singleton instances
-    import orchestrator.cli_session_manager
-    import orchestrator.cli_websocket
+    # Reset global singleton instances when legacy modules are present
+    try:
+        import orchestrator.cli_session_manager as cli_session_manager
 
-    orchestrator.cli_session_manager._cli_session_manager = None
-    orchestrator.cli_websocket._cli_websocket_handler = None
+        cli_session_manager._cli_session_manager = None
+    except ModuleNotFoundError:
+        pass
+
+    try:
+        import orchestrator.cli_websocket as cli_websocket
+
+        cli_websocket._cli_websocket_handler = None
+    except ModuleNotFoundError:
+        pass
 
 
 # Skip conditions
@@ -247,7 +258,9 @@ def pytest_runtest_setup(item):
     # Skip performance tests in CI unless explicitly requested
     if "performance" in [marker.name for marker in item.iter_markers()]:
         if os.getenv("CI") and not os.getenv("RUN_PERFORMANCE_TESTS"):
-            pytest.skip("Performance tests skipped in CI (set RUN_PERFORMANCE_TESTS=1 to enable)")
+            pytest.skip(
+                "Performance tests skipped in CI (set RUN_PERFORMANCE_TESTS=1 to enable)"
+            )
 
     # Skip security tests that require specific setup
     if "security" in [marker.name for marker in item.iter_markers()]:
@@ -259,7 +272,15 @@ def pytest_runtest_setup(item):
 @pytest.fixture
 def sample_cli_commands():
     """Sample CLI commands for testing."""
-    return ["ls -la", "pwd", "echo 'hello world'", "python --version", "git status", "help", "exit"]
+    return [
+        "ls -la",
+        "pwd",
+        "echo 'hello world'",
+        "python --version",
+        "git status",
+        "help",
+        "exit",
+    ]
 
 
 @pytest.fixture

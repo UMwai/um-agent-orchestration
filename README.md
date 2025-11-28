@@ -165,73 +165,162 @@ ContextManager (file-based sharing in /tmp/)
 - **NEW Planning Commands**: plan, plan-list, plan-continue, execute-plan
 - `--decompose` flag for automatic task breakdown
 
-## Usage Examples
+## 📚 Real-World Usage Examples
 
-### Method 1: Interactive Planning Mode (RECOMMENDED)
+### Example 1: Building a Complete Web Application
 ```bash
-# Start interactive planning session with head node
-./orchestrate plan "Build a blog platform with comments"
+# Monday morning: Plan the project interactively
+./orchestrate plan "Build a task management app with React frontend and FastAPI backend"
 
-# In the interactive session you can:
-# [d] Discuss approach with Claude
-# [a] Add new tasks
-# [r] Remove tasks
-# [m] Modify tasks
-# [s] Split complex tasks
-# [p] Proceed to approval
+# Interactive session:
+> Discussing approach...
+> Claude: I'll help you build this. Let me break it down into phases:
+>   Phase 1: Database design and API structure
+>   Phase 2: Backend implementation
+>   Phase 3: Frontend development
+>   Phase 4: Integration and testing
+>
+> [a] Add task: "Set up PostgreSQL database with user and task tables"
+> [a] Add task: "Create FastAPI CRUD endpoints for tasks"
+> [a] Add task: "Build React components for task list and forms"
+> [s] Split task: Breaking down frontend into smaller components...
+> [p] Proceed to approval
 
-# List and manage planning sessions
-./orchestrate plan-list                    # View all sessions
-./orchestrate plan-continue <session-id>   # Resume planning
-./orchestrate execute-plan <session-id>    # Execute approved plan
-```
-
-### Method 2: Automatic Task Decomposition
-```bash
-# Submit high-level task with automatic breakdown
-./orchestrate submit "Build a blog platform with comments" --decompose
-
-# This automatically creates subtasks like:
-# 1. [specifications-engineer] Design the data model and architecture
-# 2. [backend-systems-engineer] Implement the backend/API
-# 3. [frontend-ui-engineer] Create the frontend/UI
-# 4. [backend-systems-engineer] Write tests
-# 5. [claude] Create documentation
-
-# Then run the orchestrator
+# Monday afternoon: Start execution with 3 parallel agents
 ./orchestrate run --max-agents 3
-```
 
-### Method 3: Manual Task Submission
-```bash
-# Submit individual subtasks manually
-./orchestrate submit "Design database schema" --agent specifications-engineer
-./orchestrate submit "Implement API endpoints" --agent backend-systems-engineer
-./orchestrate submit "Create frontend UI" --agent frontend-ui-engineer
-
-# Run orchestrator to process all tasks
-./orchestrate run --max-agents 3
-```
-
-### Monitor Progress
-```bash
-# Check overall status
+# Tuesday morning: Check progress
 ./orchestrate status
+# Output:
+# ✅ Completed: Database schema design (specifications-engineer)
+# ✅ Completed: FastAPI backend setup (backend-systems-engineer)
+# 🔄 In Progress: React frontend components (frontend-ui-engineer)
+# ⏳ Pending: Integration tests
+# ⏳ Pending: Documentation
+```
 
-# View specific task details
-./orchestrate task abc123
+### Example 2: Data Pipeline Development
+```bash
+# Submit a complex ETL pipeline task
+./orchestrate submit "Create an ETL pipeline to process daily sales data from S3 to Snowflake" --decompose
 
-# List active agents
+# Automatically creates specialized subtasks:
+# - [data-architect-governance]: Design data model and governance policies
+# - [data-pipeline-engineer]: Build Apache Spark job for transformation
+# - [aws-cloud-architect]: Set up S3 events and Lambda triggers
+# - [data-pipeline-engineer]: Create Airflow DAG for orchestration
+# - [data-science-analyst]: Build data quality validation checks
+
+# Run overnight with higher parallelism
+./orchestrate run --max-agents 5
+
+# Next morning: Review completed work
+./orchestrate status
+ls -la pipelines/     # See generated code
+cat pipelines/sales_etl.py
+```
+
+### Example 3: Machine Learning System
+```bash
+# Interactive planning for ML project
+./orchestrate plan "Build a customer churn prediction system"
+
+# Let agents work on different aspects simultaneously
+./orchestrate execute-plan ml-project-001
+
+# While agents work, monitor specific tasks
+./orchestrate task churn-model-training
+./orchestrate agents  # See which specialists are active
+
+# Output shows parallel execution:
+# 🤖 Active Agents:
+# - ml-systems-architect: Designing feature engineering pipeline
+# - data-science-analyst: Performing EDA and statistical analysis
+# - backend-systems-engineer: Building model serving API
+```
+
+### Example 4: Microservices Architecture
+```bash
+# Submit comprehensive microservices project
+./orchestrate submit "Convert monolithic app to microservices with user, order, and payment services" -d
+
+# Monitor phase-based execution
+watch -n 10 './orchestrate status'
+
+# Agents work in coordinated phases:
+# Phase 1: All architecture design tasks (parallel)
+# Phase 2: Service implementation (parallel)
+# Phase 3: Integration and API gateway (sequential)
+# Phase 4: Testing and documentation (parallel)
+```
+
+### Example 5: Quick Feature Addition
+```bash
+# For smaller tasks, direct submission works great
+./orchestrate submit "Add OAuth2 authentication to existing Flask app" --agent backend-systems-engineer --priority high
+
+# Run single agent for focused task
+./orchestrate run --max-agents 1
+```
+
+### Example 6: Overnight Development Session
+```bash
+# Before leaving work on Friday
+./orchestrate plan "Implement complete admin dashboard with user management, analytics, and reporting"
+
+# Approve plan and let it run over weekend
+./orchestrate execute-plan dashboard-project
+
+# Set up aggressive parallelism for weekend run
+./orchestrate run --max-agents 8
+
+# Monday morning: Review all completed work
+./orchestrate status
+git diff  # See all changes made
+```
+
+## 🎯 Common Workflows
+
+### Daily Development Workflow
+```bash
+# Morning: Check overnight progress
+./orchestrate status
 ./orchestrate agents
 
-# Kill a stuck agent
-./orchestrate kill claude-abc123
+# Review completed tasks
+git diff HEAD~1
+
+# Submit new tasks based on progress
+./orchestrate submit "Fix bugs found in overnight testing" --priority high
+
+# Continue processing
+./orchestrate run
 ```
 
-### Demo Mode
+### Sprint Planning Workflow
 ```bash
-# Run a demo with sample tasks
-./orchestrate demo
+# Start planning session with team requirements
+./orchestrate plan "Sprint 23 goals: API v2, mobile responsive UI, performance optimization"
+
+# Add all sprint tasks interactively
+# Agents will work on them throughout the sprint
+
+# Daily standup: Check progress
+./orchestrate status | grep "In Progress"
+```
+
+### Emergency Hotfix Workflow
+```bash
+# High-priority production fix
+./orchestrate submit "URGENT: Fix memory leak in payment processing service" \
+  --agent backend-systems-engineer \
+  --priority high
+
+# Run with dedicated agent
+./orchestrate run --max-agents 1
+
+# Monitor until complete
+watch './orchestrate task payment-leak-fix'
 ```
 
 ## File Structure

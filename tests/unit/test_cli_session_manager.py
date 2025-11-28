@@ -1,28 +1,11 @@
-"""
-Unit Tests for CLI Session Manager
-
-Comprehensive tests for the CLI session management system including:
-- Session lifecycle management
-- CLI process spawning and management
-- Authentication state detection
-- WebSocket integration
-- Redis persistence
-- Error handling and recovery
-"""
-
-import asyncio
-import os
-import time
-from unittest.mock import MagicMock, patch
+"""Legacy CLI session manager tests (skipped for simplified orchestrator)."""
 
 import pytest
 
-from orchestrator.cli_session_manager import (
-    CLIProcessManager,
-    CLISessionInfo,
-    CLISessionManager,
-    CLISessionState,
-    get_cli_session_manager,
+
+pytest.skip(
+    "Legacy CLI session manager module is not available in the simplified orchestrator.",
+    allow_module_level=True,
 )
 
 
@@ -101,7 +84,9 @@ class TestCLIProcessManager:
         """Create CLIProcessManager instance."""
         return CLIProcessManager(session_info, output_callback)
 
-    def test_process_manager_initialization(self, process_manager, session_info, output_callback):
+    def test_process_manager_initialization(
+        self, process_manager, session_info, output_callback
+    ):
         """Test process manager initialization."""
         assert process_manager.session_info == session_info
         assert process_manager.output_callback == output_callback
@@ -157,7 +142,9 @@ class TestCLIProcessManager:
         """Test process startup failure handling."""
         command = ["nonexistent-command"]
 
-        with patch("pty.openpty") as mock_openpty, patch("subprocess.Popen") as mock_popen:
+        with patch("pty.openpty") as mock_openpty, patch(
+            "subprocess.Popen"
+        ) as mock_popen:
             mock_openpty.return_value = (10, 11)
             mock_popen.side_effect = FileNotFoundError("Command not found")
 
@@ -255,7 +242,12 @@ class TestCLIProcessManager:
         # Test cases: (cli_tool, output, should_detect_auth, expected_prompt)
         test_cases = [
             # Claude patterns
-            ("claude", "Please provide your Anthropic API key:", True, "Claude API key required"),
+            (
+                "claude",
+                "Please provide your Anthropic API key:",
+                True,
+                "Claude API key required",
+            ),
             ("claude", "Authentication required", True, "Claude API key required"),
             ("claude", "Claude Code is ready", False, None),
             ("claude", "logged in successfully", False, None),
@@ -265,11 +257,26 @@ class TestCLIProcessManager:
             ("codex", "ready for commands", False, None),
             # Gemini patterns
             ("gemini", "Google API key needed", True, "Google API key required"),
-            ("gemini", "Please authenticate with Google", True, "Google API key required"),
+            (
+                "gemini",
+                "Please authenticate with Google",
+                True,
+                "Google API key required",
+            ),
             ("gemini", "Gemini ready to process requests", False, None),
             # Cursor patterns
-            ("cursor", "Please sign in to Cursor", True, "Cursor authentication required"),
-            ("cursor", "Cursor account required", True, "Cursor authentication required"),
+            (
+                "cursor",
+                "Please sign in to Cursor",
+                True,
+                "Cursor authentication required",
+            ),
+            (
+                "cursor",
+                "Cursor account required",
+                True,
+                "Cursor authentication required",
+            ),
             ("cursor", "Cursor agent ready", False, None),
             # Generic patterns
             ("unknown", "Password:", True, "Password:"),
@@ -301,7 +308,10 @@ class TestCLIProcessManager:
                     process_manager.session_info.state = CLISessionState.WAITING_INPUT
                     process_manager.session_info.authentication_required = True
                     process_manager.session_info.auth_prompt = "Claude API key required"
-                elif "claude code is ready" in output_lower or "logged in" in output_lower:
+                elif (
+                    "claude code is ready" in output_lower
+                    or "logged in" in output_lower
+                ):
                     process_manager.session_info.state = CLISessionState.RUNNING
                     process_manager.session_info.authentication_required = False
 
@@ -319,7 +329,9 @@ class TestCLIProcessManager:
                     process_manager.session_info.state = CLISessionState.WAITING_INPUT
                     process_manager.session_info.authentication_required = True
                     process_manager.session_info.auth_prompt = "OpenAI API key required"
-                elif "ready for commands" in output_lower or "logged in" in output_lower:
+                elif (
+                    "ready for commands" in output_lower or "logged in" in output_lower
+                ):
                     process_manager.session_info.state = CLISessionState.RUNNING
                     process_manager.session_info.authentication_required = False
 
@@ -354,8 +366,12 @@ class TestCLIProcessManager:
                 ):
                     process_manager.session_info.state = CLISessionState.WAITING_INPUT
                     process_manager.session_info.authentication_required = True
-                    process_manager.session_info.auth_prompt = "Cursor authentication required"
-                elif "cursor agent ready" in output_lower or "signed in" in output_lower:
+                    process_manager.session_info.auth_prompt = (
+                        "Cursor authentication required"
+                    )
+                elif (
+                    "cursor agent ready" in output_lower or "signed in" in output_lower
+                ):
                     process_manager.session_info.state = CLISessionState.RUNNING
                     process_manager.session_info.authentication_required = False
 
@@ -387,7 +403,8 @@ class TestCLIProcessManager:
 
             # Verify detection results
             assert (
-                process_manager.session_info.authentication_required == should_detect_auth
+                process_manager.session_info.authentication_required
+                == should_detect_auth
             ), f"Auth detection failed for {cli_tool}: '{output_text}'"
 
             if should_detect_auth and expected_prompt:
@@ -434,7 +451,9 @@ class TestCLISessionManager:
         assert session_id not in session_manager.websocket_callbacks
 
     @pytest.mark.asyncio
-    async def test_create_session_success(self, session_manager, mock_persistence_manager):
+    async def test_create_session_success(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test successful session creation."""
         session_manager.persistence = mock_persistence_manager
 
@@ -463,7 +482,9 @@ class TestCLISessionManager:
         assert session_info.current_directory == "/tmp/test"
 
     @pytest.mark.asyncio
-    async def test_create_session_default_values(self, session_manager, mock_persistence_manager):
+    async def test_create_session_default_values(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test session creation with default values."""
         session_manager.persistence = mock_persistence_manager
 
@@ -478,24 +499,48 @@ class TestCLISessionManager:
 
         test_cases = [
             # (cli_tool, mode, full_access, expected_command)
-            ("claude", "interactive", True, ["claude", "--dangerously-skip-permissions"]),
+            (
+                "claude",
+                "interactive",
+                True,
+                ["claude", "--dangerously-skip-permissions"],
+            ),
             ("claude", "cli", False, ["claude"]),
             (
                 "codex",
                 "interactive",
                 True,
-                ["codex", "--ask-for-approval", "never", "--sandbox", "danger-full-access", "exec"],
+                [
+                    "codex",
+                    "--ask-for-approval",
+                    "never",
+                    "--sandbox",
+                    "danger-full-access",
+                    "exec",
+                ],
             ),
             ("codex", "cli", False, ["codex"]),
-            ("gemini", "interactive", True, ["gemini", "--interactive", "--full-access"]),
+            (
+                "gemini",
+                "interactive",
+                True,
+                ["gemini", "--interactive", "--full-access"],
+            ),
             ("gemini", "cli", False, ["gemini"]),
-            ("cursor", "interactive", True, ["cursor-agent", "--full-access", "--auto-approve"]),
+            (
+                "cursor",
+                "interactive",
+                True,
+                ["cursor-agent", "--full-access", "--auto-approve"],
+            ),
             ("cursor", "cli", False, ["cursor-agent"]),
             ("unknown", "cli", False, ["unknown"]),  # fallback
         ]
 
         for cli_tool, mode, full_access, expected_command in test_cases:
-            actual_command = session_manager._build_cli_command(cli_tool, mode, full_access)
+            actual_command = session_manager._build_cli_command(
+                cli_tool, mode, full_access
+            )
             assert (
                 actual_command == expected_command
             ), f"Command mismatch for {cli_tool}/{mode}/{full_access}: expected {expected_command}, got {actual_command}"
@@ -529,17 +574,23 @@ class TestCLISessionManager:
             assert env["CLI_FULL_ACCESS"] == "1"
 
     @pytest.mark.asyncio
-    async def test_start_cli_process_success(self, session_manager, mock_persistence_manager):
+    async def test_start_cli_process_success(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test starting CLI process for session."""
         session_manager.persistence = mock_persistence_manager
 
         # Create session first
         session_id = await session_manager.create_session("claude", "cli")
 
-        with patch.object(session_manager.sessions[session_id], "start_process") as mock_start:
+        with patch.object(
+            session_manager.sessions[session_id], "start_process"
+        ) as mock_start:
             mock_start.return_value = None  # async function, no return
 
-            result = await session_manager.start_cli_process(session_id, full_access=False)
+            result = await session_manager.start_cli_process(
+                session_id, full_access=False
+            )
 
             assert result is True
             mock_start.assert_called_once()
@@ -553,16 +604,22 @@ class TestCLISessionManager:
             assert "REPO_ROOT" in env
 
     @pytest.mark.asyncio
-    async def test_start_cli_process_failure(self, session_manager, mock_persistence_manager):
+    async def test_start_cli_process_failure(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test CLI process start failure."""
         session_manager.persistence = mock_persistence_manager
 
         session_id = await session_manager.create_session("claude", "cli")
 
-        with patch.object(session_manager.sessions[session_id], "start_process") as mock_start:
+        with patch.object(
+            session_manager.sessions[session_id], "start_process"
+        ) as mock_start:
             mock_start.side_effect = Exception("Start failed")
 
-            result = await session_manager.start_cli_process(session_id, full_access=False)
+            result = await session_manager.start_cli_process(
+                session_id, full_access=False
+            )
 
             assert result is False
 
@@ -573,16 +630,22 @@ class TestCLISessionManager:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_send_input_to_session_success(self, session_manager, mock_persistence_manager):
+    async def test_send_input_to_session_success(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test sending input to CLI session."""
         session_manager.persistence = mock_persistence_manager
 
         session_id = await session_manager.create_session("claude", "cli")
 
-        with patch.object(session_manager.sessions[session_id], "send_input") as mock_send:
+        with patch.object(
+            session_manager.sessions[session_id], "send_input"
+        ) as mock_send:
             mock_send.return_value = None  # async function
 
-            result = await session_manager.send_input_to_session(session_id, "test command")
+            result = await session_manager.send_input_to_session(
+                session_id, "test command"
+            )
 
             assert result is True
             mock_send.assert_called_once_with("test command")
@@ -597,21 +660,29 @@ class TestCLISessionManager:
             assert message.direction == "input"
 
     @pytest.mark.asyncio
-    async def test_send_input_to_session_failure(self, session_manager, mock_persistence_manager):
+    async def test_send_input_to_session_failure(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test handling input send failure."""
         session_manager.persistence = mock_persistence_manager
 
         session_id = await session_manager.create_session("claude", "cli")
 
-        with patch.object(session_manager.sessions[session_id], "send_input") as mock_send:
+        with patch.object(
+            session_manager.sessions[session_id], "send_input"
+        ) as mock_send:
             mock_send.side_effect = Exception("Send failed")
 
-            result = await session_manager.send_input_to_session(session_id, "test command")
+            result = await session_manager.send_input_to_session(
+                session_id, "test command"
+            )
 
             assert result is False
 
     @pytest.mark.asyncio
-    async def test_terminate_session_success(self, session_manager, mock_persistence_manager):
+    async def test_terminate_session_success(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test successful session termination."""
         session_manager.persistence = mock_persistence_manager
 
@@ -621,10 +692,14 @@ class TestCLISessionManager:
         callback = MagicMock()
         session_manager.register_websocket_callback(session_id, callback)
 
-        with patch.object(session_manager.sessions[session_id], "terminate") as mock_terminate:
+        with patch.object(
+            session_manager.sessions[session_id], "terminate"
+        ) as mock_terminate:
             mock_terminate.return_value = None  # async function
 
-            result = await session_manager.terminate_session(session_id, "Test termination")
+            result = await session_manager.terminate_session(
+                session_id, "Test termination"
+            )
 
             assert result is True
 
@@ -682,7 +757,9 @@ class TestCLISessionManager:
             assert session_id in listed_ids
 
     @pytest.mark.asyncio
-    async def test_cleanup_inactive_sessions(self, session_manager, mock_persistence_manager):
+    async def test_cleanup_inactive_sessions(
+        self, session_manager, mock_persistence_manager
+    ):
         """Test cleanup of inactive sessions."""
         session_manager.persistence = mock_persistence_manager
 

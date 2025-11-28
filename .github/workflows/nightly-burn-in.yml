@@ -1,0 +1,33 @@
+name: Nightly Burn-In
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  burn-in:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute burn-in harness
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: |
+          python scripts/orchestrator_burn_in.py \
+            --duration-minutes 10 \
+            --batch-size 6 \
+            --max-agents 4 \
+            --cooldown 20
