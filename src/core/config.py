@@ -23,6 +23,13 @@ class OrchestratorConfig:
     # Agent settings
     max_agents: int = 3
     agent_timeout: int = 30
+    # Maximum runtime for spawned CLI agents before being considered stale.
+    # Set to 0 or negative to disable auto-kill.
+    max_agent_runtime_hours: Optional[int] = 24
+
+    # Timeout for autonomous harness BashTool commands.
+    # Set to 0 or negative to disable timeout.
+    bash_timeout_seconds: Optional[int] = 120
 
     # Cleanup settings
     cleanup_days: int = 7
@@ -40,6 +47,20 @@ class OrchestratorConfig:
         self.cleanup_days = int(os.getenv("CLEANUP_DAYS", self.cleanup_days))
         self.use_api_mode = os.getenv("USE_API_MODE", "false").lower() == "true"
         self.api_key = os.getenv("ANTHROPIC_API_KEY")
+
+        max_runtime_env = os.getenv("MAX_AGENT_RUNTIME_HOURS")
+        if max_runtime_env is not None:
+            try:
+                self.max_agent_runtime_hours = int(max_runtime_env)
+            except ValueError:
+                pass
+
+        bash_timeout_env = os.getenv("BASH_TOOL_TIMEOUT_SECONDS")
+        if bash_timeout_env is not None:
+            try:
+                self.bash_timeout_seconds = int(bash_timeout_env)
+            except ValueError:
+                pass
 
         # Set derived paths
         if not self.context_dir:

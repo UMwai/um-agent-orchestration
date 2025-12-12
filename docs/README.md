@@ -70,6 +70,19 @@
 nohup ./orchestrate run --max-agents 4 > overnight.log 2>&1 &
 ```
 
+### Multi-day / 24x7 Runs
+Spawned CLI agents are considered stale after 24h by default. For multi‑day jobs you can raise or disable that limit, and control autonomous bash timeouts, via env vars:
+
+```bash
+# Disable auto-kill of long-running agents (or set a large number of hours)
+export MAX_AGENT_RUNTIME_HOURS=0
+
+# Allow longer BashTool commands in autonomous/daemon mode (0 disables)
+export BASH_TOOL_TIMEOUT_SECONDS=3600
+
+nohup ./orchestrate run --max-agents 4 > longrun.log 2>&1 &
+```
+
 ## 🎯 Common Patterns
 
 ### Pattern 1: Interactive Planning

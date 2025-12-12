@@ -5,7 +5,10 @@ Simple, reliable context sharing between agents using filesystem
 
 import os
 import json
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None  # Windows compatibility
 import threading
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -69,7 +72,8 @@ class ContextManager:
                 lock_file_path = file_path.with_suffix(f"{file_path.suffix}.lock")
                 lock_file = open(lock_file_path, "w")
                 try:
-                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    if fcntl:
+                        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except (OSError, IOError):
                     # Can't get OS lock, continue with thread lock only
                     pass
@@ -79,7 +83,8 @@ class ContextManager:
             finally:
                 if lock_file:
                     try:
-                        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                        if fcntl:
+                            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
                         lock_file.close()
                         # Clean up lock file
                         try:

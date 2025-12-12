@@ -1,0 +1,43 @@
+{
+    "auto_mode": false,
+    "max_loops": 100,
+    "allow_list": [
+        "read_file"
+    ],
+    "require_approval": [
+        "bash",
+        "edit_file"
+    ],
+    "supervisor_interval_seconds": 30,
+    "context_pruning_threshold_chars": 50000,
+    "max_tool_result_chars": 100000,
+    "max_file_read_bytes": 1048576,
+    "rate_limit": {
+        "requests_per_minute": 30,
+        "max_cost_per_hour_usd": 10.0
+    },
+    "circuit_breaker": {
+        "failure_threshold": 5,
+        "recovery_timeout_seconds": 60
+    },
+    "security": {
+        "workspace_jail": null,
+        "allowed_bash_commands": [
+            "ls", "cat", "head", "tail", "grep", "find", "wc",
+            "echo", "pwd", "whoami", "date", "env", "which",
+            "git", "python", "pip", "npm", "node"
+        ],
+        "blocked_patterns": [
+            "rm -rf", "mkfs", "dd if=", ":(){", "chmod 777",
+            "curl.*\\|.*sh", "wget.*\\|.*sh", "nc -e", "bash -i"
+        ]
+    },
+    "timeouts": {
+        "bash_command_seconds": 120,
+        "api_call_seconds": 60,
+        "task_total_seconds": 3600
+    },
+    "max_restarts": 10,
+    "restart_backoff_base_seconds": 5,
+    "restart_backoff_max_seconds": 300
+}

@@ -222,6 +222,7 @@ class InputValidator:
         valid_types = [
             "claude",
             "codex",
+            "gemini",
             "data-pipeline-engineer",
             "backend-systems-engineer",
             "frontend-ui-engineer",

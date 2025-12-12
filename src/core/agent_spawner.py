@@ -18,11 +18,13 @@ import textwrap
 from .input_validator import InputValidator, ValidationError
 from .claude_cli_manager import get_claude_manager
 from .file_operations import FileOperations
+from .config import get_config
 
 
 class AgentType(Enum):
     CLAUDE = "claude"
     CODEX = "codex"
+    GEMINI = "gemini"
     # Claude specialized agents
     DATA_PIPELINE = "data-pipeline-engineer"
     BACKEND_ENGINEER = "backend-systems-engineer"
@@ -58,12 +60,17 @@ class AgentSpawner:
         base_dir: str = "/tmp/agent_orchestrator",
         max_agents: int = 10,
         max_output_queue_size: int = 1000,
+        max_runtime_hours: Optional[int] = None,
     ):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.agents: Dict[str, AgentProcess] = {}
         self.max_agents = max_agents
         self.max_output_queue_size = max_output_queue_size
+        config_runtime = get_config().max_agent_runtime_hours
+        if max_runtime_hours is None:
+            max_runtime_hours = config_runtime if config_runtime is not None else 0
+        self.max_runtime_hours = max_runtime_hours
         self.output_queue = queue.Queue(maxsize=max_output_queue_size)
         self._cleanup_lock = threading.Lock()
         self._cleanup_thread = None
@@ -238,6 +245,21 @@ class AgentSpawner:
                 "exec",
                 "--skip-git-repo-check",
                 f"@{prompt_file}",  # Read from file instead of command substitution
+            ]
+        elif agent_type == AgentType.GEMINI:
+            # Check if gemini CLI exists
+            if not shutil.which("gemini"):
+                return [
+                    "sh",
+                    "-c",
+                    'echo "DEMO MODE: Gemini would process task" > output.txt',
+                ]
+
+            # Gemini CLI non-interactive mode uses -p "<prompt>"
+            return [
+                "gemini",
+                "-p",
+                prompt,
             ]
         else:
             # All agent types (including specialized) use Claude CLI
@@ -488,9 +510,21 @@ class AgentSpawner:
             for agent_id in completed_agents:
                 self.cleanup_agent(agent_id)
 
-    def _cleanup_stale_agents(self, max_runtime_hours: int = 24):
-        """Kill agents that have been running too long"""
-        max_runtime_seconds = max_runtime_hours * 3600
+    def _cleanup_stale_agents(self, max_runtime_hours: Optional[int] = None):
+        """Kill agents that have been running too long.
+
+        Uses the configured max runtime unless overridden. Set to 0 or negative
+        to disable auto-kill for multi-day runs.
+        """
+        runtime_hours = (
+            max_runtime_hours
+            if max_runtime_hours is not None
+            else self.max_runtime_hours
+        )
+        if runtime_hours is None or runtime_hours <= 0:
+            return
+
+        max_runtime_seconds = runtime_hours * 3600
         current_time = time.time()
 
         with self._cleanup_lock:

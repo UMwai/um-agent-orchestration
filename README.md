@@ -50,6 +50,32 @@ This system orchestrates multiple Claude agents with specialized roles (backend 
    cat examples/simple_workflow.sh
 ```
 
+## 📦 Install As CLI (for use in any repo)
+
+If you want to call the orchestrator from other projects, install it once in editable mode:
+
+```bash
+cd /path/to/um-agent-orchestration
+python3 -m pip install -e .
+```
+
+Then in any repo:
+
+```bash
+cd /path/to/other/repo
+orchestrate plan "Your high-level goal"
+orchestrate run --max-agents 3
+```
+
+### Tool-Friendly (Non-interactive) Usage
+For automation/tool-calling flows, prefer non-interactive commands:
+
+```bash
+# Decompose into subtasks without interactive planning
+orchestrate submit "Implement xyz..." --decompose
+orchestrate run --max-agents 3
+```
+
 ## 🎯 Key Features
 
 ### Specialized Agent Types

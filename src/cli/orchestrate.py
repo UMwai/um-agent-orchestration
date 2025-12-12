@@ -117,20 +117,15 @@ class Orchestrator:
             # Spawn new agents if under limit
             while len(active_agents) < max_agents:
                 # Try each agent type
-                for agent_type_str in ["claude", "codex"]:
+                for agent_type_enum in AgentType:
+                    agent_type_str = agent_type_enum.value
                     task = self.queue.get_next_task(agent_type_str)
                     if task:
-                        # Assign and spawn
-                        agent_type = (
-                            AgentType.CLAUDE
-                            if agent_type_str == "claude"
-                            else AgentType.CODEX
-                        )
-
+                        # Assign and spawn using the requested agent type
                         if self.queue.assign_task(task.id, f"{agent_type_str}-agent"):
                             try:
                                 agent_id = self.spawner.spawn_agent(
-                                    agent_type=agent_type,
+                                    agent_type=agent_type_enum,
                                     task_id=task.id,
                                     task_description=task.description,
                                     context=task.context,
@@ -168,10 +163,29 @@ class Orchestrator:
         click.echo("✨ All tasks completed!")
 
 
+
+
+
 @click.group()
 def cli():
     """Simple Agent Orchestrator - Manage multiple CLI agents"""
     pass
+
+
+@cli.command()
+@click.argument("task_description")
+def daemon(task_description):
+    """Run the agent in 24/7 Supervisor mode"""
+    from src.core.agent_api import AgentAPI
+    from src.core.autonomous_harness import AutonomousHarness, Supervisor
+    
+    click.echo(f"😈 Starting 24/7 Daemon for: {task_description}")
+    
+    api = AgentAPI()
+    harness = AutonomousHarness(api)
+    supervisor = Supervisor(harness)
+    
+    supervisor.run_forever(task_description)
 
 
 @cli.command()
@@ -180,7 +194,7 @@ def cli():
     "--agent",
     "-a",
     default="any",
-    type=click.Choice(["claude", "codex", "any"]),
+    type=click.Choice(["claude", "codex", "gemini", "any"]),
     help="Preferred agent type",
 )
 @click.option(
@@ -264,10 +278,224 @@ def submit(description, agent, priority, context, decompose):
         return
 
 
+
+@cli.command()
+@click.argument("task_description")
+@click.option("--steps", default=50, help="Maximum number of steps")
+def autonomous(task_description, steps):
+    """Run an autonomous agent task loop"""
+    from src.core.agent_api import AgentAPI
+
+    click.echo(f"🤖 Starting Autonomous Agent for: {task_description}")
+    
+    # Initialize API and Harness
+    api = AgentAPI()
+    harness = AutonomousHarness(api)
+    
+    try:
+        result = harness.run_task(task_description, max_steps=steps)
+        
+        # Show execution summary
+        click.echo("\n📊 Execution Summary:")
+        click.echo(f"  Steps: {result.get('steps', 'N/A')}")
+        click.echo(f"  Duration: {result.get('duration', 0):.2f}s")
+        click.echo(f"  Tool Calls: {result.get('tool_calls', 0)}")
+        click.echo(f"  Parallel Batches: {result.get('parallel_batches', 0)}")
+        click.echo(f"  Completed: {'✅' if result.get('completed') else '⚠️ Max steps reached'}")
+        
+    except KeyboardInterrupt:
+        click.echo("\n⚠️ Interrupted by user")
+    except Exception as e:
+        click.echo(f"\n❌ Error: {e}", err=True)
+
+
+@cli.command("autonomous-parallel")
+@click.argument("task_description")
+@click.option("--subtasks", "-s", default=3, help="Number of parallel subtasks")
+@click.option("--steps", default=20, help="Maximum steps per subtask")
+@click.option("--parallel-agents", "-p", default=3, help="Maximum parallel agents")
+def autonomous_parallel(task_description, subtasks, steps, parallel_agents):
+    """Run autonomous task with parallel subtask execution"""
+    from src.core.agent_api import AgentAPI
+    from src.core.autonomous_harness import ParallelAutonomousHarness, ExecutionMode
+    from src.core.task_decomposer import TaskDecomposer
+    
+    click.echo(f"🤖 Starting Parallel Autonomous Agent")
+    click.echo(f"   Task: {task_description}")
+    click.echo(f"   Parallel Agents: {parallel_agents}")
+    
+    # Initialize API and Harness
+    api = AgentAPI()
+    harness = ParallelAutonomousHarness(
+        api,
+        max_parallel_agents=parallel_agents,
+        execution_mode=ExecutionMode.AUTO,
+    )
+    
+    # Decompose task into subtasks
+    click.echo("\n🔍 Decomposing task into subtasks...")
+    decomposer = TaskDecomposer()
+    decomposed = decomposer.decompose_task(task_description, max_subtasks=subtasks)
+    
+    if not decomposed:
+        click.echo("❌ Failed to decompose task", err=True)
+        return
+    
+    subtask_descriptions = [st.description for st in decomposed]
+    click.echo(f"📝 Created {len(subtask_descriptions)} subtasks:")
+    for i, desc in enumerate(subtask_descriptions, 1):
+        click.echo(f"   {i}. {desc[:60]}...")
+    
+    try:
+        click.echo(f"\n⚡ Executing {len(subtask_descriptions)} subtasks in parallel...")
+        results = harness.run_parallel_subtasks(subtask_descriptions, max_steps_per_task=steps)
+        
+        # Show results
+        click.echo("\n📊 Results:")
+        click.echo("=" * 70)
+        
+        successful = sum(1 for r in results if "error" not in r)
+        total_duration = sum(r.get("result", {}).get("duration", 0) for r in results if "result" in r)
+        
+        for result in results:
+            idx = result.get("index", 0)
+            subtask = result.get("subtask", "Unknown")[:50]
+            if "error" in result:
+                click.echo(f"  ❌ {idx+1}. {subtask}... - Error: {result['error']}")
+            else:
+                res = result.get("result", {})
+                status = "✅" if res.get("completed") else "⚠️"
+                click.echo(f"  {status} {idx+1}. {subtask}... - {res.get('steps', 0)} steps, {res.get('duration', 0):.1f}s")
+        
+        click.echo("=" * 70)
+        click.echo(f"✨ Completed: {successful}/{len(results)} subtasks")
+        click.echo(f"   Total Duration: {total_duration:.2f}s")
+        
+    except KeyboardInterrupt:
+        click.echo("\n⚠️ Interrupted by user")
+    except Exception as e:
+        click.echo(f"\n❌ Error: {e}", err=True)
+
+
+@cli.command("execute-parallel")
+@click.argument("description")
+@click.option("--parallel", "-p", default=3, help="Number of parallel agents")
+@click.option("--decompose/--no-decompose", "-d", default=True, help="Auto-decompose into phases")
+def execute_parallel(description, parallel, decompose):
+    """Execute a task with parallel agent decomposition"""
+    from src.core.parallel_executor import ParallelExecutor
+    from src.core.task_decomposer import TaskDecomposer
+    from src.core.agent_api import AgentAPI, AgentTask, AgentType
+    
+    click.echo(f"⚡ Parallel Execution Mode")
+    click.echo(f"   Task: {description}")
+    click.echo(f"   Parallel Agents: {parallel}")
+    
+    api = AgentAPI()
+    executor = ParallelExecutor(max_workers=parallel)
+    
+    if decompose:
+        click.echo("\n🔍 Decomposing task...")
+        decomposer = TaskDecomposer()
+        phases = decomposer.decompose_task(description, max_subtasks=5)
+        
+        if not phases:
+            click.echo("❌ Failed to decompose task", err=True)
+            return
+        
+        # Create execution plan
+        execution_phases = decomposer.create_execution_plan(phases)
+        click.echo(f"📋 Created {len(execution_phases)} execution phases")
+        
+        # Convert to task dicts for executor
+        all_results = []
+        for phase_idx, phase in enumerate(execution_phases):
+            click.echo(f"\n🔄 Executing Phase {phase_idx + 1}/{len(execution_phases)}")
+            
+            tasks = [
+                {
+                    "task_id": f"task_{phase_idx}_{i}",
+                    "description": subtask.description,
+                    "agent_type": subtask.agent_type,
+                }
+                for i, subtask in enumerate(phase)
+            ]
+            
+            def execute_task(task_dict):
+                agent_task = AgentTask(
+                    task_id=task_dict["task_id"],
+                    description=task_dict["description"],
+                    agent_type=AgentType.BACKEND,  # Default
+                )
+                return api.execute_task(agent_task)
+            
+            result = executor.execute_parallel(tasks, execute_task)
+            all_results.append(result)
+            
+            click.echo(f"   Phase {phase_idx + 1}: {result.successful}/{result.total_tasks} tasks succeeded")
+        
+        # Summary
+        total_tasks = sum(r.total_tasks for r in all_results)
+        total_successful = sum(r.successful for r in all_results)
+        total_time = sum(r.total_time for r in all_results)
+        
+        click.echo("\n📊 Execution Summary:")
+        click.echo(f"   Phases: {len(all_results)}")
+        click.echo(f"   Total Tasks: {total_tasks}")
+        click.echo(f"   Successful: {total_successful}")
+        click.echo(f"   Total Time: {total_time:.2f}s")
+    else:
+        # Single task execution
+        task = AgentTask(
+            task_id="single_task",
+            description=description,
+            agent_type=AgentType.BACKEND,
+        )
+        result = api.execute_task(task)
+        click.echo(f"\n📝 Result:\n{result[:500]}...")
+
+
+@cli.command("pool-status")
+def pool_status():
+    """Show status of subagent pool"""
+    from src.core.subagent_pool import SubagentPool
+    
+    # Create a temporary pool to show what a pool looks like
+    pool = SubagentPool(
+        pool_size=5,
+        agent_types=["backend", "frontend", "data"],
+        warmup_on_init=True,
+    )
+    
+    stats = pool.get_stats()
+    
+    click.echo("\n📊 Subagent Pool Status:")
+    click.echo("=" * 50)
+    click.echo(f"  Total Agents: {stats.total_agents}")
+    click.echo(f"  Idle Agents: {stats.idle_agents}")
+    click.echo(f"  Busy Agents: {stats.busy_agents}")
+    click.echo(f"  Error Agents: {stats.error_agents}")
+    click.echo(f"  Utilization: {stats.pool_utilization:.1%}")
+    click.echo(f"  Tasks Completed: {stats.total_tasks_completed}")
+    click.echo(f"  Avg Task Duration: {stats.avg_task_duration:.2f}s")
+    
+    # Show agent details
+    agents = pool.get_agent_details()
+    if agents:
+        click.echo("\n🤖 Pool Agents:")
+        for agent in agents:
+            state_icon = {"idle": "🟢", "busy": "🟡", "error": "🔴"}.get(agent["state"], "⚪")
+            click.echo(f"  {state_icon} {agent['agent_id']}")
+            click.echo(f"     Type: {agent['agent_type']}")
+            click.echo(f"     Tasks: {agent['task_count']}")
+            click.echo(f"     Age: {agent['age_seconds']:.0f}s")
+    
+    pool.shutdown()
+
+
 @cli.command()
 @click.option("--max-agents", "-m", default=3, help="Maximum concurrent agents")
 def run(max_agents):
-    """Run the orchestrator to process tasks"""
     orchestrator = Orchestrator()
 
     click.echo(f"🎯 Starting orchestrator with max {max_agents} agents...")

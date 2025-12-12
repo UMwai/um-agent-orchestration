@@ -9,6 +9,7 @@ from typing import List, Optional
 class AgentType(Enum):
     CLAUDE = "claude"
     CODEX = "codex"
+    GEMINI = "gemini"
     # Specialized agents
     DATA_PIPELINE = "data-pipeline-engineer"
     BACKEND_ENGINEER = "backend-systems-engineer"
@@ -35,6 +36,11 @@ class AgentCapabilities:
             "icon": "💻",
             "description": "Code implementation",
             "categories": ["coding", "implementation"],
+        },
+        AgentType.GEMINI: {
+            "icon": "🔍",
+            "description": "Alternative generalist (Gemini)",
+            "categories": ["analysis", "coding", "research"],
         },
         AgentType.DATA_PIPELINE: {
             "icon": "🔄",
@@ -114,7 +120,11 @@ class AgentCapabilities:
     @classmethod
     def get_specialized_agents(cls) -> List[AgentType]:
         """Get list of specialized agents (excluding generic ones)"""
-        return [t for t in AgentType if t not in (AgentType.CLAUDE, AgentType.CODEX)]
+        return [
+            t
+            for t in AgentType
+            if t not in (AgentType.CLAUDE, AgentType.CODEX, AgentType.GEMINI)
+        ]
 
     @classmethod
     def recommend_agent(cls, task_description: str) -> AgentType:
